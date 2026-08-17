@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "pack-aws-arch-pro",
+  "title": "AWS Certified Solutions Architect – Professional",
+  "description": "Unofficial hard-mode practice for AWS Certified Solutions Architect – Professional (SAP-C02): multi-account governance, hybrid networking, migrations, DR, security, data, and cost trade-offs.",
+  "homeSubtitle": "Scenario-heavy SAP-C02 architecture drills for the AWS cert most people fear.",
+  "themeColor": "#ff9900",
+  "categories": [
+    {
+      "key": "orgs",
+      "label": "Organizations & governance",
+      "icon": "🏛️",
+      "shortLabel": "Gov"
+    },
+    {
+      "key": "networking",
+      "label": "Hybrid networking",
+      "icon": "🌐",
+      "shortLabel": "Net"
+    },
+    {
+      "key": "migration",
+      "label": "Migration & modernization",
+      "icon": "🚚",
+      "shortLabel": "Move"
+    },
+    {
+      "key": "dr",
+      "label": "Resilience & DR",
+      "icon": "🛟",
+      "shortLabel": "DR"
+    },
+    {
+      "key": "security",
+      "label": "Security architecture",
+      "icon": "🔐",
+      "shortLabel": "Sec"
+    },
+    {
+      "key": "data",
+      "label": "Data & analytics",
+      "icon": "🗃️",
+      "shortLabel": "Data"
+    },
+    {
+      "key": "cost",
+      "label": "Cost optimization",
+      "icon": "💸",
+      "shortLabel": "Cost"
+    }
+  ]
+}
