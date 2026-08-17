@@ -142,9 +142,12 @@ jobs:
         run: |
           set -euo pipefail
           api="https://api.cloudflare.com/client/v4"
+          # The repo's CLOUDFLARE_ACCOUNT_ID secret may be empty; Wrangler can
+          # infer it from the token, but direct API calls need it explicitly.
+          CF_ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-70b494550992cda97e893fab035f7e9a}"
           auth=(-H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json")
 
-          domains=$(curl -fsS "${api}/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${PAGES_PROJECT_NAME}/domains" "${auth[@]}")
+          domains=$(curl -fsS "${api}/accounts/${CF_ACCOUNT_ID}/pages/projects/${PAGES_PROJECT_NAME}/domains" "${auth[@]}")
           has_domain=$(printf '%s' "$domains" | node -e '
             let s=""; process.stdin.on("data", d => s += d);
             process.stdin.on("end", () => {
@@ -154,7 +157,7 @@ jobs:
             });
           ')
           if [ "$has_domain" != "yes" ]; then
-            curl -fsS "${api}/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${PAGES_PROJECT_NAME}/domains"               "${auth[@]}"               --data "{"name":"${CUSTOM_DOMAIN}"}"
+            curl -fsS "${api}/accounts/${CF_ACCOUNT_ID}/pages/projects/${PAGES_PROJECT_NAME}/domains"               "${auth[@]}"               --data "{"name":"${CUSTOM_DOMAIN}"}"
           fi
 
           # If this token can edit DNS, keep the CNAME in place too. Pages may
