@@ -17,6 +17,8 @@ jobs:
       SYNC_WORKER_NAME: quizmill-sync
       D1_DATABASE_NAME: quizmill-sync
       PAGES_PROJECT_NAME: pack-aws-arch-pro
+      EXISTING_SYNC_URL: ${{ secrets.QUIZMILL_SYNC_URL || secrets.NEXT_PUBLIC_SYNC_URL }}
+      CONFIGURED_D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID || secrets.CLOUDFLARE_D1_DATABASE_ID }}
     steps:
       - name: Checkout pack
         uses: actions/checkout@v6
@@ -56,14 +58,35 @@ jobs:
           set -euo pipefail
           npx wrangler --version
 
-          DB_ID=$(npx wrangler d1 list --json | node -e '
-            let s=""; process.stdin.on("data", d => s += d);
-            process.stdin.on("end", () => {
-              const dbs = JSON.parse(s || "[]");
-              const db = dbs.find(d => d.name === process.env.D1_DATABASE_NAME);
-              process.stdout.write(db ? (db.uuid || db.id || "") : "");
-            });
-          ')
+          if [ -n "${EXISTING_SYNC_URL:-}" ]; then
+            echo "Using existing sync backend from secret."
+            echo "NEXT_PUBLIC_SYNC_URL=$EXISTING_SYNC_URL" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          DB_ID="${CONFIGURED_D1_DATABASE_ID:-}"
+          if [ -z "$DB_ID" ]; then
+            set +e
+            DB_JSON=$(npx wrangler d1 list --json 2>/tmp/d1-list.err)
+            D1_STATUS=$?
+            set -e
+            if [ "$D1_STATUS" -ne 0 ]; then
+              echo "Cloudflare token can deploy Pages, but cannot list/create D1 databases." >&2
+              echo "Grant D1 edit/read permissions to CLOUDFLARE_API_TOKEN, or add one of these repo secrets:" >&2
+              echo "  QUIZMILL_SYNC_URL=https://<existing-sync-worker>.workers.dev" >&2
+              echo "  D1_DATABASE_ID=<existing quizmill-sync D1 database uuid>" >&2
+              cat /tmp/d1-list.err >&2 || true
+              exit 1
+            fi
+            DB_ID=$(printf '%s' "$DB_JSON" | node -e '
+              let s=""; process.stdin.on("data", d => s += d);
+              process.stdin.on("end", () => {
+                const dbs = JSON.parse(s || "[]");
+                const db = dbs.find(d => d.name === process.env.D1_DATABASE_NAME);
+                process.stdout.write(db ? (db.uuid || db.id || "") : "");
+              });
+            ')
+          fi
 
           if [ -z "$DB_ID" ]; then
             echo "Creating D1 database $D1_DATABASE_NAME"
@@ -88,7 +111,7 @@ jobs:
             const p = "wrangler.toml";
             let s = fs.readFileSync(p, "utf8");
             s = s.replace(/database_name = ".*"/, `database_name = "${process.env.D1_DATABASE_NAME}"`);
-            s = s.replace(/database_id = ".*"/, `database_id = "${process.env.DB_ID || process.argv[1]}"`);
+            s = s.replace(/database_id = ".*"/, `database_id = "${process.argv[1]}"`);
             fs.writeFileSync(p, s);
           ' "$DB_ID"
 
