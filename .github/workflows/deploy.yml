@@ -55,4 +55,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy engine/out --project-name pack-aws-arch-pro
+          command: pages project create pack-aws-arch-pro --production-branch main || true && pages deploy engine/out --project-name pack-aws-arch-pro
