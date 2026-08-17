@@ -17,6 +17,8 @@ jobs:
       SYNC_WORKER_NAME: quizmill-sync
       D1_DATABASE_NAME: quizmill-sync
       PAGES_PROJECT_NAME: pack-aws-arch-pro
+      CUSTOM_DOMAIN: aws-arch-pro.quizmill.dev
+      CUSTOM_ZONE: quizmill.dev
       EXISTING_SYNC_URL: ${{ secrets.QUIZMILL_SYNC_URL || secrets.NEXT_PUBLIC_SYNC_URL }}
       CONFIGURED_D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID || secrets.CLOUDFLARE_D1_DATABASE_ID }}
     steps:
@@ -135,3 +137,59 @@ jobs:
         run: |
           npx wrangler pages project create "$PAGES_PROJECT_NAME" --production-branch main || true
           npx wrangler pages deploy engine/out --project-name "$PAGES_PROJECT_NAME"
+
+      - name: Configure quizmill.dev custom domain
+        run: |
+          set -euo pipefail
+          api="https://api.cloudflare.com/client/v4"
+          auth=(-H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json")
+
+          domains=$(curl -fsS "${api}/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${PAGES_PROJECT_NAME}/domains" "${auth[@]}")
+          has_domain=$(printf '%s' "$domains" | node -e '
+            let s=""; process.stdin.on("data", d => s += d);
+            process.stdin.on("end", () => {
+              const json = JSON.parse(s || "{}");
+              const found = (json.result || []).some(d => d.name === process.env.CUSTOM_DOMAIN);
+              process.stdout.write(found ? "yes" : "no");
+            });
+          ')
+          if [ "$has_domain" != "yes" ]; then
+            curl -fsS "${api}/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${PAGES_PROJECT_NAME}/domains"               "${auth[@]}"               --data "{"name":"${CUSTOM_DOMAIN}"}"
+          fi
+
+          # If this token can edit DNS, keep the CNAME in place too. Pages may
+          # create/validate it automatically for zones in the same account; this
+          # makes the intent explicit without failing the deploy on DNS-scope gaps.
+          set +e
+          zone_json=$(curl -fsS "${api}/zones?name=${CUSTOM_ZONE}" "${auth[@]}")
+          zone_status=$?
+          set -e
+          if [ "$zone_status" -eq 0 ]; then
+            zone_id=$(printf '%s' "$zone_json" | node -e '
+              let s=""; process.stdin.on("data", d => s += d);
+              process.stdin.on("end", () => {
+                const json = JSON.parse(s || "{}");
+                process.stdout.write(json.result?.[0]?.id || "");
+              });
+            ')
+            if [ -n "$zone_id" ]; then
+              records=$(curl -fsS "${api}/zones/${zone_id}/dns_records?type=CNAME&name=${CUSTOM_DOMAIN}" "${auth[@]}")
+              record_id=$(printf '%s' "$records" | node -e '
+                let s=""; process.stdin.on("data", d => s += d);
+                process.stdin.on("end", () => {
+                  const json = JSON.parse(s || "{}");
+                  process.stdout.write(json.result?.[0]?.id || "");
+                });
+              ')
+              body="{"type":"CNAME","name":"${CUSTOM_DOMAIN}","content":"${PAGES_PROJECT_NAME}.pages.dev","proxied":true}"
+              if [ -n "$record_id" ]; then
+                curl -fsS -X PUT "${api}/zones/${zone_id}/dns_records/${record_id}" "${auth[@]}" --data "$body" >/dev/null
+              else
+                curl -fsS -X POST "${api}/zones/${zone_id}/dns_records" "${auth[@]}" --data "$body" >/dev/null
+              fi
+            fi
+          else
+            echo "::notice::Could not query ${CUSTOM_ZONE} DNS zone with this token; Pages custom domain was still configured."
+          fi
+
+          echo "Custom domain configured: https://${CUSTOM_DOMAIN}/"
