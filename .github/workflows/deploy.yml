@@ -209,12 +209,10 @@ jobs:
                   });
                 ')
                 if [ -n "$record_ids" ]; then
-                  while IFS= read -r record_id; do
+                  printf '%s\n' "$record_ids" | while IFS= read -r record_id; do
                     [ -z "$record_id" ] && continue
                     curl -sS -X DELETE "${api}/zones/${zone_id}/dns_records/${record_id}" "${auth[@]}" >/dev/null || true
-                  done <<EOF
-${record_ids}
-EOF
+                  done
                 fi
 
                 body=$(node -e 'process.stdout.write(JSON.stringify({ type: "CNAME", name: process.env.CUSTOM_DOMAIN, content: `${process.env.PAGES_PROJECT_NAME}.pages.dev`, proxied: false }))')
