@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "pack-aws-arch-pro",
   "title": "AWS Certified Solutions Architect – Professional",
   "description": "Unofficial hard-mode practice for AWS Certified Solutions Architect – Professional (SAP-C02): multi-account governance, hybrid networking, migrations, DR, security, data, and cost trade-offs.",
@@ -10,43 +10,77 @@
       "key": "orgs",
       "label": "Organizations & governance",
       "icon": "🏛️",
-      "shortLabel": "Gov"
+      "shortLabel": "Gov",
+      "weight": 0.18
     },
     {
       "key": "networking",
       "label": "Hybrid networking",
       "icon": "🌐",
-      "shortLabel": "Net"
+      "shortLabel": "Net",
+      "weight": 0.18
     },
     {
       "key": "migration",
       "label": "Migration & modernization",
       "icon": "🚚",
-      "shortLabel": "Move"
+      "shortLabel": "Move",
+      "weight": 0.16
     },
     {
       "key": "dr",
       "label": "Resilience & DR",
       "icon": "🛟",
-      "shortLabel": "DR"
+      "shortLabel": "DR",
+      "weight": 0.18
     },
     {
       "key": "security",
       "label": "Security architecture",
       "icon": "🔐",
-      "shortLabel": "Sec"
+      "shortLabel": "Sec",
+      "weight": 0.12
     },
     {
       "key": "data",
       "label": "Data & analytics",
       "icon": "🗃️",
-      "shortLabel": "Data"
+      "shortLabel": "Data",
+      "weight": 0.1
     },
     {
       "key": "cost",
       "label": "Cost optimization",
       "icon": "💸",
-      "shortLabel": "Cost"
+      "shortLabel": "Cost",
+      "weight": 0.08
+    }
+  ],
+  "levelsLabel": "Mode",
+  "levels": [
+    {
+      "key": "standard",
+      "label": "Standard SAP-C02"
+    },
+    {
+      "key": "extreme",
+      "label": "Extreme hard mode"
+    }
+  ],
+  "exam": {
+    "label": "SAP-C02 readiness",
+    "passPct": 75,
+    "scaled": true,
+    "questionCount": 75,
+    "scope": {
+      "level": "standard"
+    }
+  },
+  "sources": [
+    {
+      "label": "Original",
+      "name": "Original generated scenarios",
+      "blurb": "Original Quizmill scenarios informed by public SAP-C02 discussion themes: Organizations/SCP, hybrid networking/DNS, DR, migration, security, data, and cost trade-offs."
     }
   ]
 }

@@ -25,7 +25,8 @@
     "correctKey": "A",
     "explanation": "SCPs provide preventative account-level guardrails across OUs. A condition on ec2:ImageId enforces approved AMIs while a carefully scoped exception preserves break-glass/incident response. Config is detective, RAM does not prevent other AMIs, and permission boundaries are harder to guarantee across all identities.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-orgs-002",
@@ -53,7 +54,8 @@
     "correctKey": "A",
     "explanation": "An organization trail plus a dedicated log archive account is the standard immutable-ish central logging pattern. Bucket policies/KMS policies keep member admins away from deletion or tampering. Per-account trails are administratively fragile; CloudWatch subscriptions and Config do not replace centralized CloudTrail evidence.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-orgs-003",
@@ -81,7 +83,8 @@
     "correctKey": "A",
     "explanation": "Control Tower provides the managed landing zone, account vending, guardrails, logging, and IAM Identity Center integration. StackSets and Service Catalog can help, but alone they do not provide the full governed landing-zone lifecycle with the same low custom-code footprint.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-networking-001",
@@ -109,7 +112,8 @@
     "correctKey": "A",
     "explanation": "Transit Gateway is built for many-VPC and hybrid hub-and-spoke networks. Multiple TGW route tables allow segmentation and centralized inspection. Peering full mesh does not scale, PrivateLink is service-oriented rather than full network connectivity, and IGWs do not provide private east-west inspection.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-networking-002",
@@ -137,7 +141,8 @@
     "correctKey": "A",
     "explanation": "PrivateLink exposes a specific service privately without transitive routing or CIDR-overlap problems. VPC peering/VPN create broader network connectivity and operational burden; public ALBs do not meet private-access requirements.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-networking-003",
@@ -165,7 +170,8 @@
     "correctKey": "A",
     "explanation": "Transit Gateway peering provides scalable private inter-Region routing between TGW domains. VPCs are regional, so a global VPC is not possible. Full-mesh peering is operationally poor; NAT/public routing is unnecessary and weaker.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-migration-001",
@@ -193,7 +199,8 @@
     "correctKey": "A",
     "explanation": "DMS full-load plus CDC is the common low-downtime pattern for active relational migrations. Backup/restore or bulk exports would usually exceed the outage window at 200 TB. RDS cannot use Storage Gateway as its database storage.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-migration-002",
@@ -221,7 +228,8 @@
     "correctKey": "A",
     "explanation": "ALB layer-7 path-based routing supports strangler-fig modernization by moving slices of traffic to new services. Route 53 does DNS-level routing, not path routing. NLB is layer 4. Big-bang migration increases risk.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-migration-003",
@@ -249,7 +257,8 @@
     "correctKey": "A",
     "explanation": "At petabyte scale with limited WAN, Snowball Edge is designed for offline bulk migration. DataSync can handle incremental sync and metadata-aware transfer. Direct WAN transfer would be too slow; EBS staging adds cost/complexity; AWS Backup is not the right general file migration mechanism here.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-dr-001",
@@ -277,7 +286,8 @@
     "correctKey": "A",
     "explanation": "Aurora Global Database offers low-lag cross-Region replication suitable for aggressive RPO/RTO when paired with warm/pre-provisioned application capacity and failover automation. Snapshots/backups are too slow and have higher RPO. Multi-AZ is regional resilience, not regional DR.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-dr-002",
@@ -305,7 +315,8 @@
     "correctKey": "A",
     "explanation": "For relaxed RTO/RPO and minimal cost, backup-and-restore is appropriate. Active-active and warm standby cost more to meet tighter objectives. Pilot light can reduce RTO but is more costly/complex than needed if 4 hours/24 hours is acceptable.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-dr-003",
@@ -333,7 +344,8 @@
     "correctKey": "A",
     "explanation": "DynamoDB global tables are the managed active-active option, but architects must understand and design around replication/conflict semantics. The application should use conditional writes, idempotency, versioning, or domain-specific conflict rules. The distractors are not suitable systems of record for global active-active writes.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-security-001",
@@ -361,7 +373,8 @@
     "correctKey": "A",
     "explanation": "Policy-level ABAC using principal/session tags and prefix conditions moves tenant isolation into IAM/S3 authorization, reducing blast radius from application bugs. Naming conventions alone are not enforcement. Versioning/MFA Delete and SSE-S3 address different risks.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-security-002",
@@ -389,7 +402,8 @@
     "correctKey": "A",
     "explanation": "Secrets Manager and KMS use AWS PrivateLink interface endpoints. Endpoint policies can narrow allowed actions/resources. Gateway endpoints are for S3/DynamoDB only; IGW/NAT violates the no-internet/NAT requirement.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-security-003",
@@ -417,7 +431,8 @@
     "correctKey": "A",
     "explanation": "Centralizing encryption keys in the log archive/security account with restrictive key policies prevents member-account admins from granting themselves decrypt. AWS-managed keys and per-account customer keys leave too much control in workload accounts. Unencrypted logs are weaker and often non-compliant.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-data-001",
@@ -445,7 +460,8 @@
     "correctKey": "A",
     "explanation": "Analytical reporting should be isolated from OLTP, especially with tolerated staleness. Replication/export to Redshift/S3 avoids production query impact. Multi-AZ standbys are not readable for this purpose; vertical scaling masks the architecture problem.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-data-002",
@@ -473,7 +489,8 @@
     "correctKey": "A",
     "explanation": "Kinesis Data Streams supports high-throughput ordered stream ingestion, multiple consumers, and retention/replay. SQS messages are consumed rather than replayed by independent consumers unless fanout is added; EventBridge and Step Functions are not ideal for raw massive clickstreams.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-data-003",
@@ -501,7 +518,8 @@
     "correctKey": "A",
     "explanation": "Lake Formation provides central fine-grained data lake permissions integrated with Glue, Athena, Redshift Spectrum, and cross-account sharing. Bucket ACLs and broad IAM roles are coarse and unsafe; CloudFront signed URLs do not solve analytical governance.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-cost-001",
@@ -529,7 +547,8 @@
     "correctKey": "A",
     "explanation": "Compute Savings Plans are flexible across instance families/sizes/OS in a Region and fit predictable baseline compute. Zonal RIs are less flexible, Spot is risky for all baseline production, and Dedicated Hosts solve licensing/compliance needs rather than general discounts.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-cost-002",
@@ -557,7 +576,8 @@
     "correctKey": "A",
     "explanation": "Fault-tolerant queue workers are ideal for Spot when designed for interruption, diversification, idempotency, and fallback. Peak On-Demand or peak RIs waste money; single-AZ/single-type Spot has poor capacity resilience.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-cost-003",
@@ -585,7 +605,8 @@
     "correctKey": "A",
     "explanation": "Predictable access patterns are a good fit for S3 Lifecycle transitions. Standard for hot access, IA for cooler data, and Glacier classes for archival retention minimize cost while respecting retrieval needs. Immediate Deep Archive would hurt the 2-week hot period.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-networking-004",
@@ -613,7 +634,8 @@
     "correctKey": "A",
     "explanation": "Route 53 Resolver inbound/outbound endpoints with conditional forwarding rules are designed for hybrid DNS. Public zones would expose private naming; hosts files do not scale; NAT is irrelevant to private DNS resolution.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-security-004",
@@ -641,7 +663,8 @@
     "correctKey": "A",
     "explanation": "GuardDuty organization delegated administration is the scalable managed pattern with automatic enrollment. Manual invitations are brittle. Custom polling is not equivalent to GuardDuty threat detection. Security Hub can aggregate findings but does not replace enabling GuardDuty everywhere.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-migration-004",
@@ -669,7 +692,8 @@
     "correctKey": "A",
     "explanation": "EFS provides managed shared NFS semantics across AZs and often suits lift-and-shift apps expecting shared file storage. Instance store is ephemeral/local. S3 is object storage, not full POSIX semantics. EBS multi-attach has constraints and is not cross-AZ shared NFS replacement.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-dr-004",
@@ -697,7 +721,8 @@
     "correctKey": "A",
     "explanation": "Availability and disaster recovery are related but different. Multi-AZ handles many AZ-level failures; Region-wide DR needs another Region, data replication or backups, capacity plans, DNS/traffic failover, and tests.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-data-004",
@@ -725,7 +750,8 @@
     "correctKey": "A",
     "explanation": "DynamoDB is purpose-built for managed high-scale key-value/document access with single-digit millisecond latency when keys match access patterns. The other options either do not meet scale/latency/ops needs or are not ideal systems of record for this use case.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-cost-004",
@@ -753,7 +779,8 @@
     "correctKey": "A",
     "explanation": "Gateway endpoints for S3 and DynamoDB avoid routing that traffic through NAT Gateways, reducing NAT processing charges and keeping traffic private. NAT instances add operations and still process traffic. Public subnets weaken posture; Transfer Acceleration targets internet uploads to S3, not this problem.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-orgs-004",
@@ -781,7 +808,8 @@
     "correctKey": "A",
     "explanation": "Chargeback starts with consistent tags, activated cost allocation tags, and billing data such as CUR/Cost Categories. Name tags alone are incomplete; one payer per app is unmanageable; PDFs are too coarse.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-security-005",
@@ -809,7 +837,8 @@
     "correctKey": "A",
     "explanation": "CloudFront plus WAF gives global edge filtering for L7 attacks and managed reputation/rule groups before traffic reaches regional origins. Security groups/NACLs are not L7 WAFs, and host-only controls act too late.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
   },
   {
     "id": "pack-aws-arch-pro-migration-005",
@@ -837,6 +866,375 @@
     "correctKey": "A",
     "explanation": "AWS Application Migration Service is designed for lift-and-shift server migration with continuous block-level replication and cutover into EC2. DMS is database migration, Glue is data catalog/ETL, and AppFlow is SaaS data integration.",
     "source": "generated",
-    "reviewStatus": "draft"
+    "reviewStatus": "draft",
+    "level": "standard"
+  },
+  {
+    "id": "pack-aws-arch-pro-extreme-001",
+    "categoryKey": "networking",
+    "level": "extreme",
+    "difficulty": 5,
+    "prompt": "Extreme hard mode: A company has two Direct Connect locations, each with a transit VIF to a Direct Connect gateway associated with TGWs in three Regions. They need deterministic failover: prefer local DX, then remote DX, then VPN backup, while avoiding asymmetric routing through inspection VPCs. What is the strongest design?",
+    "options": [
+      {
+        "key": "A",
+        "text": "Use BGP communities/local preference on the customer routers, separate TGW route tables for inspection and spokes, and static/propagated route controls so each Region prefers its local DX path with VPN routes less preferred."
+      },
+      {
+        "key": "B",
+        "text": "Advertise identical prefixes with identical BGP attributes everywhere and rely on AWS to pick the nearest path automatically."
+      },
+      {
+        "key": "C",
+        "text": "Use VPC peering between all VPCs and terminate VPNs directly in every VPC."
+      },
+      {
+        "key": "D",
+        "text": "Put NAT Gateways in the inspection VPC and send all hybrid traffic through public elastic IPs."
+      }
+    ],
+    "correctKey": "A",
+    "explanation": "At this level the answer is not just 'use Direct Connect'. You need route intent: BGP attributes/communities on-prem, TGW route-table segmentation, inspection routing, and VPN as a lower-preference backup. Equal advertisements can produce non-deterministic/asymmetric outcomes, especially with inspection requirements.",
+    "source": "generated",
+    "reviewStatus": "draft",
+    "tags": [
+      "extreme",
+      "direct-connect",
+      "tgw",
+      "bgp"
+    ]
+  },
+  {
+    "id": "pack-aws-arch-pro-extreme-002",
+    "categoryKey": "orgs",
+    "level": "extreme",
+    "difficulty": 5,
+    "prompt": "Extreme hard mode. Select TWO. A platform team must let workload accounts create IAM roles for applications but prevent privilege escalation beyond an approved boundary, even if account admins write their own role policies. Which controls belong in the design? Select TWO.",
+    "options": [
+      {
+        "key": "A",
+        "text": "An SCP that denies iam:CreateRole and iam:PutRolePermissionsBoundary unless the approved permissions boundary ARN is attached."
+      },
+      {
+        "key": "B",
+        "text": "An SCP that denies iam:DetachRolePolicy, iam:DeleteRolePermissionsBoundary, or iam:PutRolePolicy when the target role lacks the approved boundary conditions."
+      },
+      {
+        "key": "C",
+        "text": "A Config rule that reports roles without boundaries once per day."
+      },
+      {
+        "key": "D",
+        "text": "A resource tag named Boundary=Enabled on every IAM role, with no IAM/SCP condition enforcement."
+      },
+      {
+        "key": "E",
+        "text": "A trust policy that allows sts:AssumeRole from every principal in the organization."
+      }
+    ],
+    "correctKeys": [
+      "A",
+      "B"
+    ],
+    "explanation": "Permission boundaries only work as guardrails if creation and later mutation are constrained. SCP denies around create/update/delete boundary actions prevent admins from creating or stripping roles outside the boundary. Config is detective only; tags without policy enforcement do nothing; broad trust policies increase risk.",
+    "source": "generated",
+    "reviewStatus": "draft",
+    "tags": [
+      "extreme",
+      "iam",
+      "scp",
+      "permissions-boundary"
+    ]
+  },
+  {
+    "id": "pack-aws-arch-pro-extreme-003",
+    "categoryKey": "dr",
+    "level": "extreme",
+    "difficulty": 5,
+    "prompt": "Extreme hard mode: A payments platform uses Aurora PostgreSQL, DynamoDB, SQS FIFO, and idempotent Lambda workers. The board demands active-active multi-Region with no duplicate charges and a 5-minute RTO. What is the most defensible response?",
+    "options": [
+      {
+        "key": "A",
+        "text": "Challenge full active-active for the relational payment ledger; use a single-writer or carefully partitioned write model, global/idempotency keys, regional failover runbooks, and service-specific replication where semantics are understood."
+      },
+      {
+        "key": "B",
+        "text": "Turn on Aurora Global Database and DynamoDB global tables and assume all write conflicts are automatically resolved correctly."
+      },
+      {
+        "key": "C",
+        "text": "Use Route 53 latency routing across both Regions and let SQS FIFO queues replicate messages cross-Region."
+      },
+      {
+        "key": "D",
+        "text": "Store all charges in ElastiCache Global Datastore because it has low-latency replication."
+      }
+    ],
+    "correctKey": "A",
+    "explanation": "Professional architecture includes pushing back on impossible/unsafe requirements. Active-active payments need deterministic write ownership, idempotency, conflict strategy, and explicit failover. Aurora Global Database is not magic multi-writer for arbitrary ledgers, DynamoDB last-writer semantics may be wrong, and SQS FIFO is regional.",
+    "source": "generated",
+    "reviewStatus": "draft",
+    "tags": [
+      "extreme",
+      "active-active",
+      "payments",
+      "dr"
+    ]
+  },
+  {
+    "id": "pack-aws-arch-pro-extreme-004",
+    "categoryKey": "security",
+    "level": "extreme",
+    "difficulty": 5,
+    "prompt": "Extreme hard mode: A central logging bucket uses Object Lock in compliance mode. Workload accounts deliver CloudTrail and VPC Flow Logs. Auditors require that even security operators cannot silently decrypt or delete logs. Which combination is strongest?",
+    "options": [
+      {
+        "key": "A",
+        "text": "Object Lock compliance retention, bucket policy denies deletes except lifecycle after retention, KMS key in a separate security/log archive account with decrypt limited by tightly controlled roles, CloudTrail data events on the log bucket, and alerting on KMS decrypt attempts."
+      },
+      {
+        "key": "B",
+        "text": "SSE-S3 encryption and a bucket policy allowing OrganizationAccountAccessRole in every account."
+      },
+      {
+        "key": "C",
+        "text": "Versioning only, because versioned objects cannot be deleted."
+      },
+      {
+        "key": "D",
+        "text": "A lifecycle rule that immediately transitions logs to Deep Archive with no KMS controls."
+      }
+    ],
+    "correctKey": "A",
+    "explanation": "Object Lock compliance mode handles retention, but confidentiality and operator accountability need KMS separation, restrictive key policies, audit trails, and monitoring. Versioning alone still permits delete markers and admin tampering; SSE-S3 does not provide separate decrypt governance.",
+    "source": "generated",
+    "reviewStatus": "draft",
+    "tags": [
+      "extreme",
+      "object-lock",
+      "kms",
+      "logging"
+    ]
+  },
+  {
+    "id": "pack-aws-arch-pro-extreme-005",
+    "categoryKey": "migration",
+    "level": "extreme",
+    "difficulty": 5,
+    "prompt": "Extreme hard mode: A company must migrate a latency-sensitive Oracle RAC workload with shared storage assumptions. They want 'move it to RDS tomorrow' with minimal code change and RAC-style behavior. What should the architect recommend first?",
+    "options": [
+      {
+        "key": "A",
+        "text": "Run a compatibility and architecture assessment; consider rehosting on EC2 or Oracle-specific managed/partner options first, because RDS for Oracle does not provide Oracle RAC semantics."
+      },
+      {
+        "key": "B",
+        "text": "Use AWS DMS because DMS automatically converts RAC clustering into Multi-AZ RDS."
+      },
+      {
+        "key": "C",
+        "text": "Use Amazon EFS as the storage layer under RDS for Oracle."
+      },
+      {
+        "key": "D",
+        "text": "Use Aurora PostgreSQL Global Database with no application testing because it is highly available."
+      }
+    ],
+    "correctKey": "A",
+    "explanation": "The trick is recognizing service semantics. RDS for Oracle Multi-AZ is not Oracle RAC, and shared-storage/app behavior may block a direct replatform. DMS moves data; it does not preserve RAC architecture. RDS storage is managed by AWS and cannot be swapped for EFS.",
+    "source": "generated",
+    "reviewStatus": "draft",
+    "tags": [
+      "extreme",
+      "oracle",
+      "migration",
+      "rac"
+    ]
+  },
+  {
+    "id": "pack-aws-arch-pro-extreme-006",
+    "categoryKey": "data",
+    "level": "extreme",
+    "difficulty": 5,
+    "prompt": "Extreme hard mode. Select TWO. A DynamoDB table has hot partitions despite on-demand capacity. The access pattern is tenantId plus monotonically increasing timestamp; one tenant produces 70% of writes. Which mitigations are valid? Select TWO.",
+    "options": [
+      {
+        "key": "A",
+        "text": "Write-shard the hot tenant partition with a calculated suffix and query across shards when reading time ranges."
+      },
+      {
+        "key": "B",
+        "text": "Redesign the partition key to distribute high-volume tenants while preserving known query access patterns."
+      },
+      {
+        "key": "C",
+        "text": "Enable Multi-AZ on DynamoDB to split the hot logical partition."
+      },
+      {
+        "key": "D",
+        "text": "Create a global secondary index with the same hot partition key."
+      },
+      {
+        "key": "E",
+        "text": "Move the table to S3 Standard-IA."
+      }
+    ],
+    "correctKeys": [
+      "A",
+      "B"
+    ],
+    "explanation": "DynamoDB scaling depends on key distribution. A dominant tenant and monotonic writes can hot-spot a logical partition; write sharding or access-pattern-aware key redesign are valid. DynamoDB is already multi-AZ, and copying the same hot key to a GSI just moves the problem.",
+    "source": "generated",
+    "reviewStatus": "draft",
+    "tags": [
+      "extreme",
+      "dynamodb",
+      "hot-partition"
+    ]
+  },
+  {
+    "id": "pack-aws-arch-pro-extreme-007",
+    "categoryKey": "cost",
+    "level": "extreme",
+    "difficulty": 5,
+    "prompt": "Extreme hard mode: A global analytics platform spends heavily on inter-AZ data transfer, NAT Gateway processing, and cross-Region replication. Leadership asks for 'one quick discount'. What is the best architecture-led cost response?",
+    "options": [
+      {
+        "key": "A",
+        "text": "Break down traffic flows first, then reduce avoidable data movement: add S3/DynamoDB endpoints, keep chatty tiers AZ-affine where resilience allows, aggregate before cross-Region replication, and only then apply Savings Plans/RIs to stable compute."
+      },
+      {
+        "key": "B",
+        "text": "Buy Compute Savings Plans for the full current bill because they reduce all AWS services."
+      },
+      {
+        "key": "C",
+        "text": "Replace all managed services with EC2 because EC2 is always cheaper."
+      },
+      {
+        "key": "D",
+        "text": "Disable Multi-AZ and replication everywhere immediately."
+      }
+    ],
+    "correctKey": "A",
+    "explanation": "Professional cost optimization starts with architecture and usage drivers. Savings Plans do not reduce NAT/data-transfer/S3/DynamoDB charges. Managed-to-EC2 rewrites can increase operational cost. Removing resilience blindly violates requirements.",
+    "source": "generated",
+    "reviewStatus": "draft",
+    "tags": [
+      "extreme",
+      "cost",
+      "data-transfer"
+    ]
+  },
+  {
+    "id": "pack-aws-arch-pro-extreme-008",
+    "categoryKey": "networking",
+    "level": "extreme",
+    "difficulty": 5,
+    "prompt": "Extreme hard mode: Private hosted zone `corp.internal` is associated with many VPCs. On-premises also has `corp.internal` for legacy records. Some names resolve inconsistently after adding Resolver rules. What should be fixed?",
+    "options": [
+      {
+        "key": "A",
+        "text": "Avoid overlapping authoritative namespaces; split zones or use precise conditional forwarding so each name is answered by exactly one authority path."
+      },
+      {
+        "key": "B",
+        "text": "Add more outbound Resolver endpoints until the inconsistency disappears."
+      },
+      {
+        "key": "C",
+        "text": "Create a public hosted zone for `corp.internal` so internet DNS is authoritative."
+      },
+      {
+        "key": "D",
+        "text": "Disable AmazonProvidedDNS in every VPC."
+      }
+    ],
+    "correctKey": "A",
+    "explanation": "Hybrid DNS gets nasty when the same zone is authoritative in multiple places. Resolver endpoint count is not the root issue; namespace ownership and forwarding specificity are. Public zones for private names and disabling VPC DNS are bad fixes.",
+    "source": "generated",
+    "reviewStatus": "draft",
+    "tags": [
+      "extreme",
+      "dns",
+      "route-53-resolver"
+    ]
+  },
+  {
+    "id": "pack-aws-arch-pro-extreme-009",
+    "categoryKey": "orgs",
+    "level": "extreme",
+    "difficulty": 5,
+    "prompt": "Extreme hard mode: A delegated admin account manages Security Hub, GuardDuty, Config aggregators, and IAM Access Analyzer. New accounts must be enrolled automatically, but the management account must not run day-to-day security operations. What is the cleanest pattern?",
+    "options": [
+      {
+        "key": "A",
+        "text": "Use AWS Organizations delegated administrator features per service, auto-enable organization members where supported, and deploy baseline StackSets/Control Tower lifecycle hooks for service gaps."
+      },
+      {
+        "key": "B",
+        "text": "Share the management account root credentials with the security team."
+      },
+      {
+        "key": "C",
+        "text": "Invite each new account manually from the security account and track it in a spreadsheet."
+      },
+      {
+        "key": "D",
+        "text": "Put all workloads in the security account so delegation is unnecessary."
+      }
+    ],
+    "correctKey": "A",
+    "explanation": "Delegated administrator is the Organizations-native way to keep the management account out of daily operations while centrally administering security services. Not every service has identical auto-enable behavior, so StackSets/Control Tower lifecycle automation fills gaps.",
+    "source": "generated",
+    "reviewStatus": "draft",
+    "tags": [
+      "extreme",
+      "delegated-admin",
+      "security-hub",
+      "guardduty"
+    ]
+  },
+  {
+    "id": "pack-aws-arch-pro-extreme-010",
+    "categoryKey": "dr",
+    "level": "extreme",
+    "difficulty": 5,
+    "prompt": "Extreme hard mode. Select TWO. A supposedly warm-standby DR environment fails a game day: DNS moved, but users hit stale data and some writes vanished. Which two missing practices most directly address this? Select TWO.",
+    "options": [
+      {
+        "key": "A",
+        "text": "Define and test application-level write freeze/drain or failover sequencing so asynchronous replicas are promoted only after understood lag boundaries."
+      },
+      {
+        "key": "B",
+        "text": "Continuously measure replication lag/RPO and make the failover decision/runbook account for it."
+      },
+      {
+        "key": "C",
+        "text": "Lower Route 53 TTL to zero and assume databases follow DNS instantly."
+      },
+      {
+        "key": "D",
+        "text": "Use larger EC2 instances in the DR Region without testing data promotion."
+      },
+      {
+        "key": "E",
+        "text": "Delete the primary Region backups after failover to avoid split brain."
+      }
+    ],
+    "correctKeys": [
+      "A",
+      "B"
+    ],
+    "explanation": "DNS failover is only one layer. Warm standby requires data-plane readiness: replication lag visibility, write-drain/freeze, promotion order, and tested runbooks. TTL alone does not solve stale replicas or lost writes; bigger instances do not fix consistency.",
+    "source": "generated",
+    "reviewStatus": "draft",
+    "tags": [
+      "extreme",
+      "dr",
+      "rpo",
+      "game-day"
+    ]
   }
 ]
