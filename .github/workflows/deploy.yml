@@ -167,8 +167,7 @@ jobs:
               });
             ')
             if [ "$ok" != "yes" ]; then
-              printf '%s
-' "$response" | node -e '
+              printf '%s\n' "$response" | node -e '
                 let s=""; process.stdin.on("data", d => s += d);
                 process.stdin.on("end", () => {
                   const json = JSON.parse(s || "{}");
