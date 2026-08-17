@@ -19,7 +19,7 @@ jobs:
       PAGES_PROJECT_NAME: pack-aws-arch-pro
       CUSTOM_DOMAIN: aws-arch-pro.quizmill.dev
       CUSTOM_ZONE: quizmill.dev
-      EXISTING_SYNC_URL: ${{ secrets.QUIZMILL_SYNC_URL || secrets.NEXT_PUBLIC_SYNC_URL }}
+      EXISTING_SYNC_URL: ${{ secrets.QUIZMILL_SYNC_URL || secrets.NEXT_PUBLIC_SYNC_URL || 'https://quizmill-sync.peter-vanhee.workers.dev' }}
       CONFIGURED_D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID || secrets.CLOUDFLARE_D1_DATABASE_ID }}
     steps:
       - name: Checkout pack
