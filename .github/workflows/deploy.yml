@@ -194,35 +194,42 @@ jobs:
               });
             ')
             if [ -n "$zone_id" ]; then
-              records=$(curl -fsS "${api}/zones/${zone_id}/dns_records?type=CNAME&name=${CUSTOM_DOMAIN}" "${auth[@]}")
-              record_id=$(printf '%s' "$records" | node -e '
-                let s=""; process.stdin.on("data", d => s += d);
-                process.stdin.on("end", () => {
-                  const json = JSON.parse(s || "{}");
-                  process.stdout.write(json.result?.[0]?.id || "");
-                });
-              ')
-              body=$(node -e 'process.stdout.write(JSON.stringify({ type: "CNAME", name: process.env.CUSTOM_DOMAIN, content: `${process.env.PAGES_PROJECT_NAME}.pages.dev`, proxied: true }))')
               set +e
-              if [ -n "$record_id" ]; then
-                dns_response=$(curl -sS -X PUT "${api}/zones/${zone_id}/dns_records/${record_id}" "${auth[@]}" --data "$body")
-              else
-                dns_response=$(curl -sS -X POST "${api}/zones/${zone_id}/dns_records" "${auth[@]}" --data "$body")
-              fi
-              dns_status=$?
+              records=$(curl -sS "${api}/zones/${zone_id}/dns_records?type=CNAME&name=${CUSTOM_DOMAIN}" "${auth[@]}")
+              records_status=$?
               set -e
-              if [ "$dns_status" -ne 0 ]; then
-                echo "::notice::Could not update DNS record for ${CUSTOM_DOMAIN}; Pages custom domain was still configured."
+              if [ "$records_status" -ne 0 ]; then
+                echo "::notice::Could not query DNS records for ${CUSTOM_DOMAIN}; Pages custom domain was still configured."
               else
-                dns_ok=$(printf '%s' "$dns_response" | node -e '
+                record_id=$(printf '%s' "$records" | node -e '
                   let s=""; process.stdin.on("data", d => s += d);
                   process.stdin.on("end", () => {
                     const json = JSON.parse(s || "{}");
-                    process.stdout.write(json.success ? "yes" : "no");
+                    process.stdout.write(json.result?.[0]?.id || "");
                   });
                 ')
-                if [ "$dns_ok" != "yes" ]; then
-                  echo "::notice::DNS API did not accept/update ${CUSTOM_DOMAIN}; Pages custom domain was still configured."
+                body=$(node -e 'process.stdout.write(JSON.stringify({ type: "CNAME", name: process.env.CUSTOM_DOMAIN, content: `${process.env.PAGES_PROJECT_NAME}.pages.dev`, proxied: true }))')
+                set +e
+                if [ -n "$record_id" ]; then
+                  dns_response=$(curl -sS -X PUT "${api}/zones/${zone_id}/dns_records/${record_id}" "${auth[@]}" --data "$body")
+                else
+                  dns_response=$(curl -sS -X POST "${api}/zones/${zone_id}/dns_records" "${auth[@]}" --data "$body")
+                fi
+                dns_status=$?
+                set -e
+                if [ "$dns_status" -ne 0 ]; then
+                  echo "::notice::Could not update DNS record for ${CUSTOM_DOMAIN}; Pages custom domain was still configured."
+                else
+                  dns_ok=$(printf '%s' "$dns_response" | node -e '
+                    let s=""; process.stdin.on("data", d => s += d);
+                    process.stdin.on("end", () => {
+                      const json = JSON.parse(s || "{}");
+                      process.stdout.write(json.success ? "yes" : "no");
+                    });
+                  ')
+                  if [ "$dns_ok" != "yes" ]; then
+                    echo "::notice::DNS API did not accept/update ${CUSTOM_DOMAIN}; Pages custom domain was still configured."
+                  fi
                 fi
               fi
             fi
