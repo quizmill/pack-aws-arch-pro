@@ -131,6 +131,10 @@ jobs:
         working-directory: engine
         env:
           PUPPETEER_SKIP_DOWNLOAD: '1'
+          # Anonymous funnel beacon (six events, random device id, off switch
+          # in Settings) -> the sync worker's analytics route. Public by design.
+          NEXT_PUBLIC_ANALYTICS_URL: https://sync.quizmill.dev/v1/analytics
+          NEXT_PUBLIC_PRIVACY_URL: https://quizmill.dev/privacy
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
