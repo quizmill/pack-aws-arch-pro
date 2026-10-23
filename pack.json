@@ -80,7 +80,7 @@
     {
       "label": "Original",
       "name": "Original generated scenarios",
-      "blurb": "Original Quizmill scenarios informed by public SAP-C02 discussion themes: Organizations/SCP, hybrid networking/DNS, DR, migration, security, data, and cost trade-offs."
+      "blurb": "Original Quizmill scenarios written from the public AWS documentation and the SAP-C02 exam guide, each linked to the doc page it rests on: Organizations/SCP, hybrid networking/DNS, DR, migration, security, data, and cost trade-offs."
     }
   ]
 }
