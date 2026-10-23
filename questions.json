@@ -389,7 +389,7 @@
       }
     ],
     "correctKey": "D",
-    "explanation": "Global tables configured for multi-Region strong consistency (MRSC) replicate each write synchronously to at least one other Region before acknowledging it, so a strongly consistent read in any Region returns the latest item and conditions are evaluated against it. The default eventual consistency mode replicates asynchronously, typically within a second, and resolves conflicts last-writer-wins, which fails both requirements. MRSC is deployed across exactly three Regions. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html",
+    "explanation": "Global tables configured for multi-Region strong consistency (MRSC) replicate each write synchronously to at least one other Region before acknowledging it, so a strongly consistent read in any Region returns the latest item and conditional writes are evaluated against it. The default eventual consistency mode replicates asynchronously and checks conditions against the local replica only, so it fails both requirements; Streams-based copies are asynchronous too, and DAX cannot front a table in another Region. MRSC needs a three-Region topology: three replicas, or two replicas and a witness. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html",
     "reviewStatus": "draft",
@@ -399,7 +399,7 @@
     "id": "pack-aws-arch-pro-security-001",
     "categoryKey": "security",
     "difficulty": 5,
-    "prompt": "A SaaS platform stores every tenant's objects in one shared S3 bucket under a per-tenant prefix. The security team needs tenant isolation that still holds if the application code has a bug that requests an object under the wrong tenant's prefix. What is the best additional control?",
+    "prompt": "A SaaS platform stores every tenant's objects in one shared S3 bucket under a per-tenant prefix. The security team needs isolation bound to the tenant when credentials are issued, so it still holds if a bug makes the application request an object under the wrong tenant's prefix. What is the best additional control?",
     "options": [
       {
         "key": "A",
@@ -479,7 +479,7 @@
       },
       {
         "key": "C",
-        "text": "SSE-KMS with a customer managed key held in the security account, whose key policy allows decrypt for one approved role."
+        "text": "SSE-KMS with a customer managed key held in the security account, whose key policy allows decrypt for one security-account role."
       },
       {
         "key": "D",
@@ -539,8 +539,8 @@
       },
       {
         "key": "B",
-        "text": "Kinesis Data Streams with the default 24-hour retention, read by one shared consumer that fans out to each team.",
-        "explanation": "The default retention is 24 hours, so a 7-day reprocess is impossible, and one shared consumer couples the teams."
+        "text": "Kinesis Data Streams left at its default retention period, read by one shared consumer that fans out to each team.",
+        "explanation": "The default retention is 24 hours, so a 7-day reprocess is impossible, and one shared consumer couples the teams' pace."
       },
       {
         "key": "C",
@@ -950,7 +950,7 @@
       }
     ],
     "correctKey": "A",
-    "explanation": "Associating a WAF web ACL with CloudFront evaluates requests at edge locations, before they reach any regional origin. AWS managed rule groups cover common layer-7 attacks, and the Amazon IP reputation list blocks addresses Amazon threat intelligence has identified. Regional web ACLs run at the ALB, Shield Advanced targets DDoS, and Network Firewall is a regional network-layer control. Read more: https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-ip-rep.html",
+    "explanation": "Associating a WAF web ACL with CloudFront evaluates requests at edge locations, before they reach any regional origin. AWS managed rule groups cover common layer-7 attacks, and the Amazon IP reputation list blocks addresses Amazon threat intelligence has identified. Regional web ACLs run at the ALB, Shield Advanced targets DDoS, and Network Firewall is a regional network-layer control. Read more: https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-ip-rep.html and https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-awswaf.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-ip-rep.html",
     "reviewStatus": "draft",
@@ -1360,8 +1360,8 @@
     "options": [
       {
         "key": "A",
-        "text": "Use Route 53 ARC routing controls so traffic shifts through an explicit, audited switch rather than health checks.",
-        "explanation": "Routing controls make the traffic switch deliberate, but they do not sequence it with database replication."
+        "text": "Promote the DR replica as soon as DNS moves, then replay the primary's unreplicated writes into it once the primary is back.",
+        "explanation": "Promoting before the replica catches up is what served stale data, and replaying old writes later can overwrite newer ones made in the DR Region."
       },
       {
         "key": "B",
@@ -1386,7 +1386,7 @@
       "C",
       "D"
     ],
-    "explanation": "Stale reads and lost writes come from promoting an asynchronous replica before it has caught up. A planned failover should stop writes at the primary and let replication drain before promotion, and the runbook needs current lag measured against the RPO to decide when promotion is acceptable. TTLs, capacity and routing controls change how traffic moves, not what data is in the DR Region. Read more: https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html",
+    "explanation": "Stale reads and lost writes come from promoting an asynchronous replica before it has caught up. A planned failover should stop writes at the primary and let replication drain before promotion, and the runbook needs current lag measured against the RPO to decide when promotion is acceptable. Promoting first and reconciling later is the failure itself, and TTLs or capacity change how traffic moves, not what data is in the DR Region. Read more: https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html",
     "reviewStatus": "draft",
