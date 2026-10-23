@@ -7,7 +7,7 @@
     "options": [
       {
         "key": "A",
-        "text": "An SCP on the workload OUs that denies ec2:RunInstances unless ec2:ImageID is an approved AMI, exempting that role by aws:PrincipalArn."
+        "text": "An SCP on the workload OUs denying ec2:RunInstances on image resources other than the approved AMIs, exempting that role by aws:PrincipalArn."
       },
       {
         "key": "B",
@@ -26,9 +26,9 @@
       }
     ],
     "correctKey": "A",
-    "explanation": "An SCP is a preventive control that applies to every principal in the member accounts, account admins included, so a Deny on ec2:RunInstances conditioned on ec2:ImageID enforces the approved list, and an aws:PrincipalArn condition exempts the incident-response role. A Config rule only reacts after launch, a permissions boundary binds only the roles it is attached to, and a tag policy validates tags, not images. Read more: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples.html",
+    "explanation": "An SCP is a preventive control that applies to every principal in the member accounts, account admins included. A Deny on ec2:RunInstances scoped to image resources (arn:aws:ec2:*::image/*), with the approved AMIs excluded, blocks any other image while leaving the instance, volume and network resources of the same call alone, and an aws:PrincipalArn condition exempts the incident-response role. A Config rule only reacts after launch, a permissions boundary binds only the roles it is attached to, and a tag policy validates tags, not images. Read more: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html and https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_syntax.html",
     "source": "generated",
-    "sourceRef": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples.html",
+    "sourceRef": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html",
     "reviewStatus": "draft",
     "level": "standard"
   },
@@ -219,8 +219,8 @@
       },
       {
         "key": "D",
-        "text": "Oracle Data Pump for the initial load, then a DMS replication task for changes, started when the import finishes.",
-        "explanation": "Changes made while the export and import ran are never captured; CDC must start from the SCN the export was consistent to."
+        "text": "Oracle Data Pump for the initial load, then a DMS CDC task with its start point set to when the import completed.",
+        "explanation": "Changes made while the export and import ran are never captured; the CDC task has to start from the SCN the export was consistent to."
       }
     ],
     "correctKey": "C",
@@ -276,7 +276,7 @@
       {
         "key": "B",
         "text": "The AWS CLI running parallel aws s3 sync jobs from several on-premises hosts over a Direct Connect public VIF.",
-        "explanation": "aws s3 sync does not carry POSIX ownership and permissions and has no end-to-end verification of the copied files."
+        "explanation": "aws s3 sync does not carry POSIX ownership and permissions, and it checks each upload but never verifies the whole dataset after transfer."
       },
       {
         "key": "C",
@@ -663,21 +663,21 @@
     "id": "pack-aws-arch-pro-cost-003",
     "categoryKey": "cost",
     "difficulty": 4,
-    "prompt": "Objects in an S3 data lake are read heavily for 30 days, then a few times a week for the next 90 days with millisecond access, then almost never, but must be kept for 7 years; retrieval within 12 hours is acceptable by then. The data cannot be regenerated, and access is predictable. Which plan costs least?",
+    "prompt": "Objects in an S3 data lake average 200 MB and are read heavily for 30 days. For the next 90 days a few objects are read each month, and those reads must return in milliseconds. After that they are almost never read but must be kept for 7 years, with retrieval within 12 hours acceptable. Access is predictable. Which plan costs least?",
     "options": [
       {
         "key": "A",
-        "text": "Lifecycle rules: S3 Standard, to Standard-IA at day 30, to Glacier Deep Archive at day 120, expiring after 7 years."
+        "text": "Lifecycle rules: S3 Standard, to Glacier Instant Retrieval at day 30, to Glacier Deep Archive at day 120, expiring after 7 years."
       },
       {
         "key": "B",
-        "text": "Lifecycle rules: S3 Standard, to One Zone-IA at day 30, to Glacier Deep Archive at day 120, expiring after 7 years.",
-        "explanation": "One Zone-IA keeps one copy in a single AZ, which is not acceptable for data that cannot be regenerated."
+        "text": "Lifecycle rules: S3 Standard, to Standard-IA at day 30, to Glacier Deep Archive at day 120, expiring after 7 years.",
+        "explanation": "Standard-IA also gives millisecond reads, but its storage costs about three times Glacier Instant Retrieval's; with so few reads the cheaper storage wins."
       },
       {
         "key": "C",
         "text": "S3 Intelligent-Tiering from upload, with the Deep Archive Access tier activated after 180 days without access.",
-        "explanation": "With a known pattern, lifecycle rules reach the cheap classes sooner and avoid Intelligent-Tiering's per-object monitoring fee."
+        "explanation": "Intelligent-Tiering moves objects only after 30 or 90 days without access and adds a per-object monitoring fee; known transitions get there sooner."
       },
       {
         "key": "D",
@@ -686,9 +686,9 @@
       }
     ],
     "correctKey": "A",
-    "explanation": "When access is predictable, lifecycle transitions match the storage class to each phase: Standard while hot, Standard-IA (multi-AZ, millisecond access) once objects are 30 days old, Glacier Deep Archive for long retention with retrieval within 12 hours, then expiration at 7 years. One Zone-IA risks data that cannot be recreated, Flexible Retrieval is too slow for the warm phase, and Intelligent-Tiering suits unknown patterns. Read more: https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html",
+    "explanation": "With predictable access, lifecycle rules can place each phase in the cheapest class that meets it. Glacier Instant Retrieval is built for long-lived data read about once a quarter that still needs millisecond access: its storage is far cheaper than Standard-IA, and its higher per-GB retrieval fee matters little when only a few objects are read. Its 90-day minimum ends exactly at day 120, when Glacier Deep Archive takes over for 12-hour retrieval. Flexible Retrieval is too slow for the warm phase, and Intelligent-Tiering waits for inactivity before moving objects. Read more: https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html and https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html",
     "source": "generated",
-    "sourceRef": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html",
+    "sourceRef": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html",
     "reviewStatus": "draft",
     "level": "standard"
   },
@@ -776,8 +776,8 @@
       },
       {
         "key": "C",
-        "text": "An Amazon EBS io2 volume with Multi-Attach enabled, attached to the instances in both AZs.",
-        "explanation": "Multi-Attach works only within one AZ and needs a cluster-aware file system, not NFS."
+        "text": "Amazon FSx for NetApp ONTAP in a Multi-AZ deployment, mounted over NFS by the instances in both AZs.",
+        "explanation": "It survives an AZ loss and speaks NFS, but its SSD storage and throughput capacity must be provisioned and resized as data grows."
       },
       {
         "key": "D",
@@ -785,7 +785,7 @@
       }
     ],
     "correctKey": "D",
-    "explanation": "EFS is a managed NFSv4 file system that stores data across multiple AZs in Regional mode and grows and shrinks with the data, so the app mounts it the same way it mounted the old NFS server. Single-AZ FSx does not survive an AZ loss, EBS Multi-Attach is confined to one AZ, and Mountpoint for S3 does not offer full file-system semantics. Read more: https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html",
+    "explanation": "EFS is a managed NFSv4 file system that stores data across multiple AZs in Regional mode and grows and shrinks with the data, so the app mounts it the same way it mounted the old NFS server and nobody sizes storage. FSx for ONTAP Multi-AZ also survives an AZ loss but needs SSD and throughput capacity provisioned, Single-AZ FSx for OpenZFS does not survive an AZ loss, and Mountpoint for S3 does not offer full file-system semantics. Read more: https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html",
     "reviewStatus": "draft",
@@ -1141,7 +1141,7 @@
       }
     ],
     "correctKey": "A",
-    "explanation": "Compliance mode stops any user, the root user included, from deleting or shortening retention on a locked object version until it expires. Reading needs kms:Decrypt, so holding the key in the security account means the log archive operators can read only when the security account grants it, and each Decrypt call is logged by CloudTrail. Governance mode can be bypassed, and SSE-S3 or a same-account key leaves reading in the operators' hands. Read more: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html",
+    "explanation": "Compliance mode stops any user, the root user included, from deleting or shortening retention on a locked object version until it expires. Reading needs kms:Decrypt, so holding the key in the security account means the log archive operators can read only when the security account grants it, and each Decrypt call is logged by CloudTrail. Governance mode can be bypassed, and SSE-S3 or a same-account key leaves reading in the operators' hands. Read more: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html and https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html",
     "reviewStatus": "draft",
@@ -1264,7 +1264,7 @@
       }
     ],
     "correctKey": "C",
-    "explanation": "The dominant charges are data movement, which commitments do not discount. Breaking the bill down by usage type confirms the drivers; then an S3 gateway endpoint removes NAT processing for S3, AZ-affine routing between chatty tiers cuts inter-AZ transfer where resilience allows, and replicating aggregated data shrinks cross-Region transfer. Savings Plans can follow for the stable compute. Read more: https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/plan-for-data-transfer.html",
+    "explanation": "The dominant charges are data movement, which commitments do not discount. An S3 gateway endpoint takes S3 traffic off the NAT gateways at no charge, AZ-affine routing between chatty tiers cuts inter-AZ transfer where resilience allows, and replicating aggregated data instead of raw data shrinks cross-Region transfer. Collapsing into one AZ gives up resilience, and interface endpoints add hourly and per-GB charges a gateway endpoint avoids. Savings Plans can follow for the stable compute. Read more: https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/plan-for-data-transfer.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/plan-for-data-transfer.html",
     "reviewStatus": "draft",
