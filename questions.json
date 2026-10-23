@@ -215,7 +215,7 @@
       },
       {
         "key": "C",
-        "text": "AWS DMS full load followed by ongoing change data capture, cutting over once replication lag is close to zero."
+        "text": "Oracle Data Pump export at a fixed SCN for the initial load, then a DMS CDC task that starts from that same SCN."
       },
       {
         "key": "D",
@@ -224,7 +224,7 @@
       }
     ],
     "correctKey": "C",
-    "explanation": "With a full load plus CDC task, DMS copies the existing data while the source stays live, then its change data capture applies ongoing changes from the redo logs until replication lag is close to zero; the outage is only the time to stop writes, let the last changes apply and switch connections. Backup or full-load-only approaches move all 50 TB inside the window, RDS for Oracle cannot restore RMAN backups, and a CDC task that starts after an import misses every change made during the load. Read more: https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
+    "explanation": "For a large, busy Oracle source, the initial copy runs while the source stays live: a Data Pump export taken as of one SCN seeds the target, and a DMS change data capture task started from that same SCN replays every change made since, until replication lag is close to zero. Cutover is then only stopping writes, letting the last changes apply and switching connections. Starting CDC when the import finishes loses the changes made during the load, a full load inside the window cannot move 50 TB in an hour, and RDS for Oracle cannot restore RMAN backups. Read more: https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
     "reviewStatus": "draft",
@@ -837,7 +837,7 @@
       },
       {
         "key": "B",
-        "text": "Amazon DynamoDB in on-demand capacity mode, with player ID as the partition key."
+        "text": "Amazon DynamoDB in on-demand mode, with player ID as the partition key and warm throughput raised before events."
       },
       {
         "key": "C",
@@ -851,7 +851,7 @@
       }
     ],
     "correctKey": "B",
-    "explanation": "DynamoDB serves key-value reads and writes at single-digit millisecond latency at any scale, replicates across three AZs, and in on-demand mode absorbs sudden spikes with no capacity to plan or servers to manage; a high-cardinality player ID spreads load across partitions. A cache is not durable, Aurora has a single writer to size, and S3 is too slow for this access pattern. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html",
+    "explanation": "DynamoDB serves key-value reads and writes at single-digit millisecond latency at any scale, replicates across three AZs, and in on-demand mode needs no capacity planning or servers. On-demand instantly absorbs up to double the previous peak, so for a known 10x jump the table's warm throughput is raised ahead of the event; a high-cardinality player ID spreads the load across partitions. A cache is not durable, Aurora has a single writer to size, and S3 is too slow for this access pattern. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html",
     "reviewStatus": "draft",
@@ -1046,8 +1046,8 @@
       },
       {
         "key": "C",
-        "text": "Deny iam:CreateRole to principals outside the platform team, which then creates each application role on request from admins.",
-        "explanation": "This stops account admins from creating roles at all, which the requirement says they must be able to do."
+        "text": "Deny iam:PutRolePermissionsBoundary unless iam:PermissionsBoundary is the approved ARN, with iam:CreateRole left unconditioned.",
+        "explanation": "This governs changing a boundary, but a role created with no boundary at all never triggers it; CreateRole itself needs the condition."
       },
       {
         "key": "D",
@@ -1079,7 +1079,7 @@
     "categoryKey": "dr",
     "level": "extreme",
     "difficulty": 5,
-    "prompt": "A payments platform in two Regions keeps its ledger in Aurora PostgreSQL, idempotency keys in DynamoDB, and queues work in SQS FIFO. Leadership wants both Regions to accept payments at all times, no payment ever charged twice, and a 5-minute RTO. What is the most defensible design?",
+    "prompt": "A payments platform in two Regions keeps its ledger in Aurora PostgreSQL, idempotency keys in DynamoDB, and queues work in SQS FIFO. Leadership wants payment requests accepted in both Regions, no payment ever charged twice, and a 5-minute RTO. What is the most defensible design?",
     "options": [
       {
         "key": "A",
@@ -1131,8 +1131,8 @@
       },
       {
         "key": "C",
-        "text": "Object Lock in compliance mode, and SSE-KMS with a key in the log archive account whose key policy lets the operators decrypt.",
-        "explanation": "The operators already hold decrypt on a key in their own account, so they can read the logs without anyone's approval."
+        "text": "Object Lock in compliance mode, and SSE-KMS with a key in the log archive account whose key policy requires MFA to decrypt.",
+        "explanation": "MFA proves who is calling, but the key sits in the operators' own account, so they can decrypt, or edit the key policy, without the security account."
       },
       {
         "key": "D",
@@ -1226,7 +1226,7 @@
       "A",
       "E"
     ],
-    "explanation": "Every partition is limited to 1,000 write units per second whatever the table's capacity mode, so a key that takes 70% of writes throttles. Spreading that tenant's writes across several partition key values, either by write sharding with a suffix or by a higher-cardinality key the queries can still use, removes the hot spot. Table capacity, DAX and a GSI with the same key leave all writes on one key. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html",
+    "explanation": "Each partition serves up to 1,000 write units per second whatever the table's capacity mode. Adaptive capacity can isolate or split a hot item collection, but with one tenant's writes landing on one partition key value and a rising timestamp, that is not something to rely on, which is what the throttling shows. Spreading that tenant's writes across several partition key values, by write sharding with a suffix or by a higher-cardinality key the queries can still use, removes the hot spot. Table capacity, DAX and a GSI with the same key leave all writes on one key. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html",
     "reviewStatus": "draft",
@@ -1250,8 +1250,8 @@
       },
       {
         "key": "B",
-        "text": "Enable S3 Intelligent-Tiering on the replicated raw data and buy Compute Savings Plans for the EC2 fleet before anything else.",
-        "explanation": "Neither touches the transfer, NAT and replication charges that dominate the bill."
+        "text": "Enable S3 Transfer Acceleration for the replication and put CloudFront in front of the chatty services to cut transfer charges.",
+        "explanation": "Transfer Acceleration speeds long-distance uploads for an extra per-GB fee, and CloudFront does not carry service-to-service traffic between AZs."
       },
       {
         "key": "C",
