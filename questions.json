@@ -111,8 +111,8 @@
       },
       {
         "key": "B",
-        "text": "One Transit Gateway with a single shared route table propagating each attachment, and a firewall appliance in each spoke VPC.",
-        "explanation": "This spreads the firewalls into every spoke instead of inspecting centrally, and one route table cannot force traffic through inspection."
+        "text": "One Transit Gateway with one route table that associates and propagates each attachment, and the inspection VPC without appliance mode.",
+        "explanation": "With one shared route table, spokes learn each other's routes and bypass inspection, and without appliance mode return traffic can reach a different appliance."
       },
       {
         "key": "C",
@@ -125,7 +125,7 @@
       }
     ],
     "correctKey": "D",
-    "explanation": "A single Transit Gateway, shared through AWS RAM, scales to hundreds of VPC attachments. Separate route tables send spoke and on-premises traffic to the inspection VPC attachment, and appliance mode keeps both directions of a flow on the same appliance so stateful inspection works. Peering is not transitive, distributed firewalls are not central inspection, and per-account TGWs multiply the routing to maintain. Read more: https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html",
+    "explanation": "A single Transit Gateway, shared through AWS RAM, scales to hundreds of VPC attachments. Separate route tables send spoke and on-premises traffic to the inspection VPC attachment, and appliance mode keeps both directions of a flow on the same appliance so stateful inspection works. A single shared route table lets spokes route to each other directly, peering is not transitive, and per-account TGWs multiply the routing to maintain. Read more: https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html",
     "reviewStatus": "draft",
@@ -828,7 +828,7 @@
     "id": "pack-aws-arch-pro-data-004",
     "categoryKey": "data",
     "difficulty": 4,
-    "prompt": "A mobile game backend reads and writes player profiles by player ID at tens of thousands of requests per second, with 10x spikes when events start. It needs single-digit millisecond latency, data durable across AZs, no capacity planning and no servers to patch. Which datastore fits best?",
+    "prompt": "A mobile game backend reads and writes player profiles by player ID at tens of thousands of requests per second, with 10x spikes when events start. It needs single-digit millisecond latency, data durable across AZs, and no servers or instances to size or patch. Which datastore fits best?",
     "options": [
       {
         "key": "A",
@@ -851,7 +851,7 @@
       }
     ],
     "correctKey": "B",
-    "explanation": "DynamoDB serves key-value reads and writes at single-digit millisecond latency at any scale, replicates across three AZs, and in on-demand mode needs no capacity planning or servers. On-demand instantly absorbs up to double the previous peak, so for a known 10x jump the table's warm throughput is raised ahead of the event; a high-cardinality player ID spreads the load across partitions. A cache is not durable, Aurora has a single writer to size, and S3 is too slow for this access pattern. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html",
+    "explanation": "DynamoDB serves key-value reads and writes at single-digit millisecond latency at any scale, replicates across three AZs, and has no servers or instances to size or patch. On-demand instantly absorbs up to double the previous peak, so for a known 10x jump the table's warm throughput is raised ahead of the event; a high-cardinality player ID spreads the load across partitions. A cache is not durable, Aurora has a single writer to size, and S3 is too slow for this access pattern. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html",
     "reviewStatus": "draft",
@@ -1017,7 +1017,7 @@
       }
     ],
     "correctKey": "C",
-    "explanation": "For traffic leaving AWS over Direct Connect, the local preference communities set on your advertisements decide between connections: 7224:7300 is high and 7224:7100 low, so location 1 becomes primary. In the Transit Gateway route table, with equal prefixes, routes propagated from a Direct Connect gateway are preferred over VPN routes, so the VPN is used only when no DX route remains. Static routes and longer prefixes override that preference. Read more: https://docs.aws.amazon.com/directconnect/latest/UserGuide/routing-and-bgp.html",
+    "explanation": "For traffic leaving AWS over Direct Connect, the local preference communities set on your advertisements decide between connections: 7224:7300 is high and 7224:7100 low, so location 1 becomes primary. In the Transit Gateway route table, with equal prefixes, routes propagated from a Direct Connect gateway are preferred over VPN routes, so the VPN is used only when no DX route remains. Static routes and longer prefixes override that preference. Read more: https://docs.aws.amazon.com/directconnect/latest/UserGuide/routing-and-bgp.html and https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/directconnect/latest/UserGuide/routing-and-bgp.html",
     "reviewStatus": "draft",
@@ -1161,8 +1161,8 @@
     "options": [
       {
         "key": "A",
-        "text": "Migrate to RDS Custom for Oracle, whose OS-level access lets the team install and configure Oracle RAC itself.",
-        "explanation": "RDS Custom gives OS access to a single-instance database; it does not support Oracle RAC."
+        "text": "Assess the app's RAC dependencies, then move to RDS Custom for Oracle and set up RAC through its OS-level access.",
+        "explanation": "RDS Custom gives OS access to a single-instance database; it does not support Oracle RAC, so the assessment would end at the wrong target."
       },
       {
         "key": "B",
@@ -1298,11 +1298,11 @@
       },
       {
         "key": "D",
-        "text": "Move the AWS records into a subdomain such as aws.corp.internal in its own zone, and keep forwarding corp.internal on premises."
+        "text": "Move the AWS records into an aws.corp.internal private zone with a system rule for it, and keep forwarding corp.internal."
       }
     ],
     "correctKey": "D",
-    "explanation": "When a forwarding rule and a private hosted zone cover the same domain name, Resolver uses the forwarding rule, so the AWS-hosted names are sent on premises and fail. Resolver picks the most specific match, so giving the AWS records their own subdomain zone (aws.corp.internal) lets them resolve locally while everything else under corp.internal still forwards on premises. Read more: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zone-private-considerations.html",
+    "explanation": "When a forwarding rule and a private hosted zone cover the same domain name, the rule takes precedence, so the AWS-hosted names are sent on premises and fail. When a query matches several rules, Resolver uses the most specific one: moving the AWS records into an aws.corp.internal zone and creating a system rule for that subdomain makes Resolver answer those names from the private zone, while the corp.internal forwarding rule keeps sending the legacy names on premises. Read more: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zone-private-considerations.html and https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-overview-DSN-queries-to-vpc.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zone-private-considerations.html",
     "reviewStatus": "draft",
