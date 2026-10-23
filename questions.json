@@ -663,7 +663,7 @@
     "id": "pack-aws-arch-pro-cost-003",
     "categoryKey": "cost",
     "difficulty": 4,
-    "prompt": "Objects in an S3 data lake average 200 MB and are read heavily for 30 days. For the next 90 days a few objects are read each month, and those reads must return in milliseconds. After that they are almost never read but must be kept for 7 years, with retrieval within 12 hours acceptable. Access is predictable. Which plan costs least?",
+    "prompt": "Objects in an S3 data lake average 200 MB and are read heavily for 30 days. For the next 90 days under 1% of the objects are read in any month, and those reads must return in milliseconds. After that they are almost never read but must be kept for 7 years, with retrieval within 12 hours acceptable. Access is predictable. Which plan costs least?",
     "options": [
       {
         "key": "A",
@@ -686,7 +686,7 @@
       }
     ],
     "correctKey": "A",
-    "explanation": "With predictable access, lifecycle rules can place each phase in the cheapest class that meets it. Glacier Instant Retrieval is built for long-lived data read about once a quarter that still needs millisecond access: its storage is far cheaper than Standard-IA, and its higher per-GB retrieval fee matters little when only a few objects are read. Its 90-day minimum ends exactly at day 120, when Glacier Deep Archive takes over for 12-hour retrieval. Flexible Retrieval is too slow for the warm phase, and Intelligent-Tiering waits for inactivity before moving objects. Read more: https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html and https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html",
+    "explanation": "With predictable access, lifecycle rules can place each phase in the cheapest class that meets it. Glacier Instant Retrieval is built for long-lived data read about once a quarter that still needs millisecond access: its storage is far cheaper than Standard-IA, and its higher per-GB retrieval fee applies to under 1% of the data a month, far less than the storage saved. Its 90-day minimum ends exactly at day 120, when Glacier Deep Archive takes over for 12-hour retrieval. Flexible Retrieval is too slow for the warm phase, and Intelligent-Tiering waits for inactivity before moving objects. Read more: https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html and https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html",
     "reviewStatus": "draft",
