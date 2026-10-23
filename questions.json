@@ -11,18 +11,18 @@
       },
       {
         "key": "B",
+        "text": "A tag policy requiring an ApprovedImage tag on EC2 instances, with enforcement enabled for the ec2:instance resource type in the workload OUs.",
+        "explanation": "A tag policy checks the tag's value when the tag is set; it never inspects which AMI the instance was launched from."
+      },
+      {
+        "key": "C",
         "text": "A permissions boundary on each developer role that allows ec2:RunInstances for approved AMI IDs, attached by the platform team's pipeline.",
         "explanation": "A boundary binds the roles it is attached to; an account admin can create a new role without it, so it is not an account-wide guardrail."
       },
       {
-        "key": "C",
+        "key": "D",
         "text": "The AWS Config managed rule approved-amis-by-id in a conformance pack, with SSM Automation remediation that terminates noncompliant instances.",
         "explanation": "Config is detective: the instance launches and runs until remediation fires, so it does not prevent the launch."
-      },
-      {
-        "key": "D",
-        "text": "A tag policy requiring an ApprovedImage tag on EC2 instances, with enforcement enabled for the ec2:instance resource type in the workload OUs.",
-        "explanation": "A tag policy checks the tag's value when the tag is set; it never inspects which AMI the instance was launched from."
       }
     ],
     "correctKey": "A",
@@ -40,25 +40,25 @@
     "options": [
       {
         "key": "A",
-        "text": "An organization trail delivering to an S3 bucket in a dedicated log archive account, with a bucket policy that denies object deletion."
-      },
-      {
-        "key": "B",
-        "text": "A trail in each member account, deployed by a StackSet, delivering to the log archive bucket with read access for the security team.",
-        "explanation": "Member-account admins own their account trails and can stop or delete them, so collection is not protected from them."
-      },
-      {
-        "key": "C",
         "text": "Account trails in each member account sending events to a central CloudWatch Logs destination through cross-account subscriptions.",
         "explanation": "The trails still live in the member accounts, so their admins can stop them; the central copy only holds what was sent."
       },
       {
-        "key": "D",
+        "key": "B",
+        "text": "An organization trail delivering to an S3 bucket in a dedicated log archive account, with a bucket policy that denies object deletion."
+      },
+      {
+        "key": "C",
         "text": "An organization trail with log file integrity validation, delivering to a bucket owned by the member account that runs the regulated workload.",
         "explanation": "Integrity validation detects tampering after the fact; a bucket in that member account is still under its admins' control."
+      },
+      {
+        "key": "D",
+        "text": "A trail in each member account, deployed by a StackSet, delivering to the log archive bucket with read access for the security team.",
+        "explanation": "Member-account admins own their account trails and can stop or delete them, so collection is not protected from them."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "B",
     "explanation": "An organization trail is created from the management account (or a delegated admin) and member accounts can see it but cannot stop or modify it. Delivering to a bucket in a separate log archive account keeps the logs out of member admins' reach, and the bucket policy blocks deletion. Per-account trails can be stopped by the account's own admins, and integrity validation only detects changes. Read more: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html",
@@ -73,7 +73,8 @@
     "options": [
       {
         "key": "A",
-        "text": "AWS Control Tower with Account Factory, adding the VPC baseline through Account Factory Customization blueprints."
+        "text": "AWS Service Catalog portfolios shared to each OU, with a product that provisions the VPC, a log bucket and Config rules.",
+        "explanation": "Service Catalog provisions products into existing accounts; it does not create accounts or set up the landing zone around them."
       },
       {
         "key": "B",
@@ -82,16 +83,15 @@
       },
       {
         "key": "C",
-        "text": "An Organizations CreateAccount pipeline in Step Functions that applies Terraform baselines and enrolls the account in Identity Center.",
-        "explanation": "Every part of this is custom code the team must build and maintain, which is what the requirement asks to avoid."
+        "text": "AWS Control Tower with Account Factory, adding the VPC baseline through Account Factory Customization blueprints."
       },
       {
         "key": "D",
-        "text": "AWS Service Catalog portfolios shared to each OU, with a product that provisions the VPC, a log bucket and Config rules.",
-        "explanation": "Service Catalog provisions products into existing accounts; it does not create accounts or set up the landing zone around them."
+        "text": "An Organizations CreateAccount pipeline in Step Functions that applies Terraform baselines and enrolls the account in Identity Center.",
+        "explanation": "Every part of this is custom code the team must build and maintain, which is what the requirement asks to avoid."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "C",
     "explanation": "Control Tower sets up the landing zone (log archive and audit accounts, centralized CloudTrail and Config, IAM Identity Center) and its Account Factory vends accounts with preventive and detective controls applied; Account Factory Customization adds a VPC baseline from a blueprint. StackSets and Service Catalog are building blocks the team would assemble itself, and a Step Functions pipeline is all custom code. Read more: https://docs.aws.amazon.com/controltower/latest/userguide/af-customization-page.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/controltower/latest/userguide/af-customization-page.html",
@@ -106,7 +106,8 @@
     "options": [
       {
         "key": "A",
-        "text": "One Transit Gateway with spoke and inspection route tables, spokes routing to the inspection VPC attachment in appliance mode."
+        "text": "A Transit Gateway in each account, each peered to a hub Transit Gateway in the network account that attaches the inspection VPC.",
+        "explanation": "Thirty TGWs with static routes on each peering add cost and operational load with no benefit over one shared TGW."
       },
       {
         "key": "B",
@@ -120,11 +121,10 @@
       },
       {
         "key": "D",
-        "text": "A Transit Gateway in each account, each peered to a hub Transit Gateway in the network account that attaches the inspection VPC.",
-        "explanation": "Thirty TGWs with static routes on each peering add cost and operational load with no benefit over one shared TGW."
+        "text": "One Transit Gateway with spoke and inspection route tables, spokes routing to the inspection VPC attachment in appliance mode."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "D",
     "explanation": "A single Transit Gateway, shared through AWS RAM, scales to hundreds of VPC attachments. Separate route tables send spoke and on-premises traffic to the inspection VPC attachment, and appliance mode keeps both directions of a flow on the same appliance so stateful inspection works. Peering is not transitive, distributed firewalls are not central inspection, and per-account TGWs multiply the routing to maintain. Read more: https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html",
@@ -172,25 +172,25 @@
     "options": [
       {
         "key": "A",
-        "text": "Peer the two transit gateways and add static routes for the remote Region's CIDRs to each Transit Gateway route table."
-      },
-      {
-        "key": "B",
-        "text": "Peer the two transit gateways and enable route propagation on the peering attachment so remote CIDRs are learned.",
-        "explanation": "Transit Gateway peering attachments do not support dynamic route propagation; routes over a peering must be static."
-      },
-      {
-        "key": "C",
         "text": "Attach the VPCs in the second Region directly to the first Region's transit gateway, so one TGW routes both Regions.",
         "explanation": "A Transit Gateway attaches VPCs in its own Region only, and one shared TGW would remove the independent failure domains."
       },
       {
-        "key": "D",
+        "key": "B",
+        "text": "Peer the two transit gateways and add static routes for the remote Region's CIDRs to each Transit Gateway route table."
+      },
+      {
+        "key": "C",
         "text": "Inter-Region VPC peering between each pair of VPCs that need to talk, leaving the transit gateways for traffic within a Region.",
         "explanation": "This works, but needs a peering connection and routes for every VPC pair, which does not scale to many VPCs."
+      },
+      {
+        "key": "D",
+        "text": "Peer the two transit gateways and enable route propagation on the peering attachment so remote CIDRs are learned.",
+        "explanation": "Transit Gateway peering attachments do not support dynamic route propagation; routes over a peering must be static."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "B",
     "explanation": "Inter-Region Transit Gateway peering keeps each Region's TGW independent and carries traffic on the AWS global network, encrypted. Peering attachments do not propagate routes, so each TGW route table needs static routes for the remote CIDRs pointing at the peering attachment. A TGW cannot attach VPCs in another Region, and per-pair VPC peering grows with the square of the VPC count. Read more: https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering.html",
@@ -205,25 +205,25 @@
     "options": [
       {
         "key": "A",
-        "text": "AWS DMS full load followed by ongoing change data capture, cutting over once replication lag is close to zero."
-      },
-      {
-        "key": "B",
         "text": "Restore an RMAN backup from Amazon S3 into the RDS for Oracle instance at the start of the outage window.",
         "explanation": "RDS for Oracle does not support restoring RMAN backups, and a 50 TB restore would not fit in an hour anyway."
       },
       {
+        "key": "B",
+        "text": "An AWS DMS full-load task, scheduled to start when writes are stopped at the beginning of the outage window.",
+        "explanation": "Without CDC the whole 50 TB has to copy inside the outage window, which cannot finish in an hour."
+      },
+      {
         "key": "C",
-        "text": "Oracle Data Pump for the initial load, then a DMS replication task for changes, started when the import finishes.",
-        "explanation": "Changes made while the export and import ran are never captured; CDC must start from the SCN the export was consistent to."
+        "text": "AWS DMS full load followed by ongoing change data capture, cutting over once replication lag is close to zero."
       },
       {
         "key": "D",
-        "text": "An AWS DMS full-load task, scheduled to start when writes are stopped at the beginning of the outage window.",
-        "explanation": "Without CDC the whole 50 TB has to copy inside the outage window, which cannot finish in an hour."
+        "text": "Oracle Data Pump for the initial load, then a DMS replication task for changes, started when the import finishes.",
+        "explanation": "Changes made while the export and import ran are never captured; CDC must start from the SCN the export was consistent to."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "C",
     "explanation": "With a full load plus CDC task, DMS copies the existing data while the source stays live, then its change data capture applies ongoing changes from the redo logs until replication lag is close to zero; the outage is only the time to stop writes, let the last changes apply and switch connections. Backup or full-load-only approaches move all 50 TB inside the window, RDS for Oracle cannot restore RMAN backups, and a CDC task that starts after an import misses every change made during the load. Read more: https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
@@ -238,25 +238,25 @@
     "options": [
       {
         "key": "A",
-        "text": "An ALB listener rule with a path condition for /checkout* forwarding to the container service's target group."
+        "text": "An ALB listener rule with a host header condition for checkout.example.com, forwarding to the container service.",
+        "explanation": "A host header rule matches the hostname, so it needs a new name; it cannot pick out /checkout on the existing domain."
       },
       {
         "key": "B",
-        "text": "ALB weighted target groups on the default rule, shifting a percentage of requests to the container service.",
-        "explanation": "Weighted target groups split all requests by percentage; they cannot send one path to the new service."
-      },
-      {
-        "key": "C",
         "text": "A Route 53 record for a new checkout subdomain pointing at the container service, keeping the main domain on the monolith.",
         "explanation": "DNS routes by name, not by URL path, so this changes the URLs clients use instead of routing /checkout."
       },
       {
+        "key": "C",
+        "text": "ALB weighted target groups on the default rule, shifting a percentage of requests to the container service.",
+        "explanation": "Weighted target groups split all requests by percentage; they cannot send one path to the new service."
+      },
+      {
         "key": "D",
-        "text": "An ALB listener rule with a host header condition for checkout.example.com, forwarding to the container service.",
-        "explanation": "A host header rule matches the hostname, so it needs a new name; it cannot pick out /checkout on the existing domain."
+        "text": "An ALB listener rule with a path condition for /checkout* forwarding to the container service's target group."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "D",
     "explanation": "ALB listener rules evaluate layer-7 conditions such as path patterns, so a rule for /checkout* can forward to the new service while the default rule keeps sending everything else to the monolith: the strangler-fig pattern. Weighted target groups split traffic by percentage, and host header rules or Route 53 records route on names, not paths. Read more: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-condition-types.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-condition-types.html",
@@ -275,13 +275,13 @@
       },
       {
         "key": "B",
-        "text": "An Amazon S3 File Gateway mounted on premises, with the files copied to its NFS share and uploaded to S3 in the background.",
-        "explanation": "File Gateway is built for ongoing hybrid access through a local cache; for a one-time bulk move AWS points to DataSync."
+        "text": "The AWS CLI running parallel aws s3 sync jobs from several on-premises hosts over a Direct Connect public VIF.",
+        "explanation": "aws s3 sync does not carry POSIX ownership and permissions and has no end-to-end verification of the copied files."
       },
       {
         "key": "C",
-        "text": "The AWS CLI running parallel aws s3 sync jobs from several on-premises hosts over a Direct Connect public VIF.",
-        "explanation": "aws s3 sync does not carry POSIX ownership and permissions and has no end-to-end verification of the copied files."
+        "text": "An Amazon S3 File Gateway mounted on premises, with the files copied to its NFS share and uploaded to S3 in the background.",
+        "explanation": "File Gateway is built for ongoing hybrid access through a local cache; for a one-time bulk move AWS points to DataSync."
       },
       {
         "key": "D",
@@ -304,17 +304,17 @@
     "options": [
       {
         "key": "A",
-        "text": "Aurora Global Database with a secondary Region, a scaled-down web tier running there, and Route 53 failover records."
+        "text": "AWS DMS ongoing replication to a standby Aurora cluster in the second Region, with Route 53 failover records.",
+        "explanation": "DMS replication adds lag and a task to operate; Aurora Global Database replicates at the storage layer with typical lag under a second."
       },
       {
         "key": "B",
-        "text": "AWS Backup copying Aurora snapshots to the second Region every hour, with the web tier pre-deployed and scaled to zero.",
-        "explanation": "Hourly snapshot copies give an RPO of up to an hour, and restoring a cluster from a snapshot takes far longer than 5 minutes."
+        "text": "Aurora Global Database with a secondary Region, a scaled-down web tier running there, and Route 53 failover records."
       },
       {
         "key": "C",
-        "text": "AWS DMS ongoing replication to a standby Aurora cluster in the second Region, with Route 53 failover records.",
-        "explanation": "DMS replication adds lag and a task to operate; Aurora Global Database replicates at the storage layer with typical lag under a second."
+        "text": "AWS Backup copying Aurora snapshots to the second Region every hour, with the web tier pre-deployed and scaled to zero.",
+        "explanation": "Hourly snapshot copies give an RPO of up to an hour, and restoring a cluster from a snapshot takes far longer than 5 minutes."
       },
       {
         "key": "D",
@@ -322,7 +322,7 @@
         "explanation": "Adding a DB instance to a headless cluster and deploying the web stack both take tens of minutes, beyond a 5-minute RTO."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "B",
     "explanation": "Aurora Global Database replicates storage to a secondary Region with typical lag under a second, and a secondary cluster that already has a reader instance can be promoted in minutes. Keeping a scaled-down web tier running there (warm standby) and failing DNS over with Route 53 health checks fits a 5-minute RTO. Snapshots miss the RPO, DMS adds lag, and a headless pilot light misses the RTO. Read more: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database-disaster-recovery.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database-disaster-recovery.html",
@@ -337,25 +337,25 @@
     "options": [
       {
         "key": "A",
-        "text": "Backup and restore: daily backups copied to the DR Region, with infrastructure as code to rebuild the stack there."
-      },
-      {
-        "key": "B",
         "text": "Pilot light: data replicated continuously to the DR Region, core services in place, app servers switched off until needed.",
         "explanation": "Pilot light buys an RTO of tens of minutes and an RPO of minutes, at an ongoing cost the 4-hour and 24-hour targets do not need."
       },
       {
+        "key": "B",
+        "text": "Multi-site active/active: both Regions serve traffic, with data replicated and Route 53 sending users to either Region.",
+        "explanation": "Active/active gives near-zero RTO and RPO at the highest cost; nothing in the requirements calls for it."
+      },
+      {
         "key": "C",
-        "text": "Warm standby: a scaled-down but fully working copy of the stack running in the DR Region, scaled out on failover.",
-        "explanation": "Warm standby keeps a running copy of the stack, which costs far more than these relaxed objectives require."
+        "text": "Backup and restore: daily backups copied to the DR Region, with infrastructure as code to rebuild the stack there."
       },
       {
         "key": "D",
-        "text": "Multi-site active/active: both Regions serve traffic, with data replicated and Route 53 sending users to either Region.",
-        "explanation": "Active/active gives near-zero RTO and RPO at the highest cost; nothing in the requirements calls for it."
+        "text": "Warm standby: a scaled-down but fully working copy of the stack running in the DR Region, scaled out on failover.",
+        "explanation": "Warm standby keeps a running copy of the stack, which costs far more than these relaxed objectives require."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "C",
     "explanation": "The AWS DR strategies trade cost against recovery objectives: backup and restore is the cheapest and fits RPO/RTO measured in hours, pilot light and warm standby keep replicated data and some or all of the stack running for tens-of-minutes or minutes RTO, and multi-site active/active targets near zero. A 24-hour RPO is met by daily cross-Region backup copies, and IaC rebuilds the stack within 4 hours. Read more: https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html",
@@ -370,25 +370,25 @@
     "options": [
       {
         "key": "A",
-        "text": "DynamoDB global tables in multi-Region strong consistency mode, with strongly consistent reads and conditional writes."
-      },
-      {
-        "key": "B",
-        "text": "DynamoDB global tables in the default multi-Region eventual consistency mode, with conditional writes on a version attribute.",
-        "explanation": "With eventual consistency a condition is checked against the local replica only, and concurrent writes resolve last-writer-wins."
-      },
-      {
-        "key": "C",
         "text": "A DynamoDB table in one Region, with DAX clusters in the other two Regions serving reads and forwarding writes.",
         "explanation": "A DAX cluster must run in the same Region as its table, so it cannot front a table in another Region."
       },
       {
-        "key": "D",
+        "key": "B",
         "text": "Separate DynamoDB tables in each Region, with DynamoDB Streams and Lambda replicating each change to the others.",
         "explanation": "Custom stream replication is asynchronous, so a read in another Region can miss a recent write."
+      },
+      {
+        "key": "C",
+        "text": "DynamoDB global tables in the default multi-Region eventual consistency mode, with conditional writes on a version attribute.",
+        "explanation": "With eventual consistency a condition is checked against the local replica only, and concurrent writes resolve last-writer-wins."
+      },
+      {
+        "key": "D",
+        "text": "DynamoDB global tables in multi-Region strong consistency mode, with strongly consistent reads and conditional writes."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "D",
     "explanation": "Global tables configured for multi-Region strong consistency (MRSC) replicate each write synchronously to at least one other Region before acknowledging it, so a strongly consistent read in any Region returns the latest item and conditions are evaluated against it. The default eventual consistency mode replicates asynchronously, typically within a second, and resolves conflicts last-writer-wins, which fails both requirements. MRSC is deployed across exactly three Regions. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html",
@@ -412,13 +412,13 @@
       },
       {
         "key": "C",
-        "text": "SSE-KMS with a customer managed key per tenant, chosen by the application when it writes each object.",
-        "explanation": "The application role needs access to every tenant's key, so a buggy request is still authorized to decrypt the wrong tenant's data."
+        "text": "Amazon Macie scanning the bucket daily and alerting when an object's tenant tag does not match its prefix.",
+        "explanation": "Macie finds sensitive data after the fact; it does not stop a request from reading another tenant's objects."
       },
       {
         "key": "D",
-        "text": "Amazon Macie scanning the bucket daily and alerting when an object's tenant tag does not match its prefix.",
-        "explanation": "Macie finds sensitive data after the fact; it does not stop a request from reading another tenant's objects."
+        "text": "SSE-KMS with a customer managed key per tenant, chosen by the application when it writes each object.",
+        "explanation": "The application role needs access to every tenant's key, so a buggy request is still authorized to decrypt the wrong tenant's data."
       }
     ],
     "correctKey": "A",
@@ -436,17 +436,17 @@
     "options": [
       {
         "key": "A",
-        "text": "Interface VPC endpoints for Secrets Manager and KMS in the workload subnets, with private DNS enabled on both."
+        "text": "An interface endpoint for Secrets Manager alone, relying on Secrets Manager to call KMS for the workload.",
+        "explanation": "Secrets Manager calls KMS for its own decryption, but the workload's direct KMS calls still need a KMS endpoint."
       },
       {
         "key": "B",
-        "text": "Gateway VPC endpoints for Secrets Manager and KMS, added to the route tables of the workload subnets.",
-        "explanation": "Gateway endpoints exist for Amazon S3 and DynamoDB alone; Secrets Manager and KMS are reached through interface endpoints."
+        "text": "Interface VPC endpoints for Secrets Manager and KMS in the workload subnets, with private DNS enabled on both."
       },
       {
         "key": "C",
-        "text": "An interface endpoint for Secrets Manager alone, relying on Secrets Manager to call KMS for the workload.",
-        "explanation": "Secrets Manager calls KMS for its own decryption, but the workload's direct KMS calls still need a KMS endpoint."
+        "text": "Gateway VPC endpoints for Secrets Manager and KMS, added to the route tables of the workload subnets.",
+        "explanation": "Gateway endpoints exist for Amazon S3 and DynamoDB alone; Secrets Manager and KMS are reached through interface endpoints."
       },
       {
         "key": "D",
@@ -454,7 +454,7 @@
         "explanation": "Requests still go to the KMS API endpoint; the custom key store changes where keys live, not how the workload reaches KMS."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "B",
     "explanation": "Secrets Manager and KMS are reached privately through interface VPC endpoints (AWS PrivateLink), and private DNS makes the default service hostnames resolve to the endpoint IPs so SDKs need no changes. Because the workload calls KMS itself, it needs a KMS endpoint as well as the Secrets Manager one. Gateway endpoints exist for S3 and DynamoDB, and a CloudHSM key store is still used through the KMS API. Read more: https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html",
@@ -469,25 +469,25 @@
     "options": [
       {
         "key": "A",
-        "text": "SSE-KMS with a customer managed key held in the security account, whose key policy allows decrypt for one approved role."
+        "text": "SSE-KMS with the AWS managed key aws/s3, plus an SCP that denies kms:Decrypt in the log archive account to non-security roles.",
+        "explanation": "An AWS managed key cannot be used from another account, so writers elsewhere and the security account cannot use it."
       },
       {
         "key": "B",
-        "text": "SSE-KMS with a customer managed key in the log archive account, its key policy limiting decrypt to a security role.",
-        "explanation": "The key lives in the account its admins control, so they can change the key policy and grant themselves decrypt."
-      },
-      {
-        "key": "C",
         "text": "SSE-S3 encryption, with a bucket policy that denies s3:GetObject to every principal except the security team's role.",
         "explanation": "The log archive admins manage the bucket policy, so they can edit it; SSE-S3 adds no separate control over decryption."
       },
       {
+        "key": "C",
+        "text": "SSE-KMS with a customer managed key held in the security account, whose key policy allows decrypt for one approved role."
+      },
+      {
         "key": "D",
-        "text": "SSE-KMS with the AWS managed key aws/s3, plus an SCP that denies kms:Decrypt in the log archive account to non-security roles.",
-        "explanation": "An AWS managed key cannot be used from another account, so writers elsewhere and the security account cannot use it."
+        "text": "SSE-KMS with a customer managed key in the log archive account, its key policy limiting decrypt to a security role.",
+        "explanation": "The key lives in the account its admins control, so they can change the key policy and grant themselves decrypt."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "C",
     "explanation": "Putting the customer managed key in the security account separates the two duties: log archive admins can manage the bucket, but reading an object needs kms:Decrypt on a key whose policy only the security account can change. A key in the log archive account, or a bucket-policy-only control, leaves the same admins able to grant themselves access, and AWS managed keys cannot be shared across accounts. Read more: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html",
@@ -502,7 +502,8 @@
     "options": [
       {
         "key": "A",
-        "text": "An Aurora zero-ETL integration with Amazon Redshift, with the reports moved to run in the Redshift warehouse."
+        "text": "Aurora parallel query enabled on the production cluster, with the clickstream data loaded into Aurora for the joins.",
+        "explanation": "Parallel query still runs on the production cluster, and loading clickstream into Aurora is itself an ETL job."
       },
       {
         "key": "B",
@@ -516,11 +517,10 @@
       },
       {
         "key": "D",
-        "text": "Aurora parallel query enabled on the production cluster, with the clickstream data loaded into Aurora for the joins.",
-        "explanation": "Parallel query still runs on the production cluster, and loading clickstream into Aurora is itself an ETL job."
+        "text": "An Aurora zero-ETL integration with Amazon Redshift, with the reports moved to run in the Redshift warehouse."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "D",
     "explanation": "A zero-ETL integration replicates Aurora MySQL data into Redshift within seconds without a pipeline to build, so the reports run as columnar warehouse queries next to the clickstream data and stop competing with OLTP traffic. A reader endpoint offloads the writer but leaves large scans on MySQL, and Glue exports or parallel query either add ETL or keep the load on production. Read more: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/zero-etl.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/zero-etl.html",
@@ -539,18 +539,18 @@
       },
       {
         "key": "B",
-        "text": "An Amazon SNS topic fanning out to an SQS queue per team, with message retention set to 14 days on each queue.",
-        "explanation": "Retention only keeps unconsumed messages; once a team processes and deletes a message it cannot be read again."
-      },
-      {
-        "key": "C",
         "text": "Kinesis Data Streams with the default 24-hour retention, read by one shared consumer that fans out to each team.",
         "explanation": "The default retention is 24 hours, so a 7-day reprocess is impossible, and one shared consumer couples the teams."
       },
       {
-        "key": "D",
+        "key": "C",
         "text": "An SQS FIFO queue per team, with the producer writing each event to all four queues in the same message group.",
         "explanation": "FIFO throughput is far below millions of events per minute in one message group, and consumed messages cannot be replayed."
+      },
+      {
+        "key": "D",
+        "text": "An Amazon SNS topic fanning out to an SQS queue per team, with message retention set to 14 days on each queue.",
+        "explanation": "Retention only keeps unconsumed messages; once a team processes and deletes a message it cannot be read again."
       }
     ],
     "correctKey": "A",
@@ -568,12 +568,12 @@
     "options": [
       {
         "key": "A",
-        "text": "AWS Lake Formation grants on Data Catalog tables, with data filters for columns and LF-Tags shared to analyst accounts."
+        "text": "Glue Data Catalog resource policies granting cross-account access to the tables, with S3 bucket policies for the data.",
+        "explanation": "Catalog resource policies work at database and table level and the bucket policy grants whole files, so columns stay exposed."
       },
       {
         "key": "B",
-        "text": "S3 Access Grants mapping each analyst group to the tables' S3 prefixes, with grants issued to roles in the analyst accounts.",
-        "explanation": "Access Grants control access to S3 prefixes and objects; they cannot hide individual columns inside a table's files."
+        "text": "AWS Lake Formation grants on Data Catalog tables, with data filters for columns and LF-Tags shared to analyst accounts."
       },
       {
         "key": "C",
@@ -582,11 +582,11 @@
       },
       {
         "key": "D",
-        "text": "Glue Data Catalog resource policies granting cross-account access to the tables, with S3 bucket policies for the data.",
-        "explanation": "Catalog resource policies work at database and table level and the bucket policy grants whole files, so columns stay exposed."
+        "text": "S3 Access Grants mapping each analyst group to the tables' S3 prefixes, with grants issued to roles in the analyst accounts.",
+        "explanation": "Access Grants control access to S3 prefixes and objects; they cannot hide individual columns inside a table's files."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "B",
     "explanation": "Lake Formation adds fine-grained permissions on top of the Glue Data Catalog: data filters restrict columns and rows, LF-Tags scale grants, and cross-account sharing goes through AWS RAM, with Athena, Redshift Spectrum and EMR enforcing it. The other options all grant at object or table level, so whoever can read a file sees every column in it. Read more: https://docs.aws.amazon.com/lake-formation/latest/dg/data-filtering.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/lake-formation/latest/dg/data-filtering.html",
@@ -601,17 +601,17 @@
     "options": [
       {
         "key": "A",
-        "text": "Compute Savings Plans sized to the baseline, leaving any usage above the commitment on On-Demand."
-      },
-      {
-        "key": "B",
         "text": "EC2 Instance Savings Plans for each current instance family, sized to that family's share of the baseline.",
         "explanation": "EC2 Instance Savings Plans are tied to one family in one Region, so they stop applying when teams switch families or move to Fargate."
       },
       {
-        "key": "C",
+        "key": "B",
         "text": "Convertible Reserved Instances for the baseline, exchanged for new instance families as teams resize.",
         "explanation": "Convertible RIs can be exchanged across families but never cover Fargate, and each change needs a manual exchange."
+      },
+      {
+        "key": "C",
+        "text": "Compute Savings Plans sized to the baseline, leaving any usage above the commitment on On-Demand."
       },
       {
         "key": "D",
@@ -619,7 +619,7 @@
         "explanation": "Standard RIs are fixed to a family, cannot cover Fargate, and resale on the Marketplace is not guaranteed."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "C",
     "explanation": "Compute Savings Plans apply automatically to EC2 usage of any family, size, OS or Region, and also to Fargate and Lambda, so the discount follows the fleet as it changes. EC2 Instance Savings Plans give a deeper discount but are locked to one family in one Region, and Reserved Instances of either type do not cover Fargate. Read more: https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html",
@@ -634,25 +634,25 @@
     "options": [
       {
         "key": "A",
-        "text": "Spot across many instance types and AZs with price-capacity-optimized allocation, a small On-Demand base, idempotent workers."
+        "text": "Spot in a single AZ with capacity-optimized allocation across many types, scaled on the queue depth.",
+        "explanation": "One AZ limits the number of Spot pools to draw from, so a shortage in that zone can stall every worker."
       },
       {
         "key": "B",
-        "text": "Spot with the lowest-price allocation strategy across two instance types in three AZs, with workers checkpointing to S3.",
-        "explanation": "Lowest-price with two types packs capacity into the cheapest pools, which are the ones most likely to be interrupted."
-      },
-      {
-        "key": "C",
         "text": "A Compute Savings Plan sized to peak demand, with workers on On-Demand instances in an Auto Scaling group.",
         "explanation": "A commitment sized to an unpredictable peak pays for idle capacity most of the time; it is not the lowest cost."
       },
       {
+        "key": "C",
+        "text": "Spot with the lowest-price allocation strategy across two instance types in three AZs, with workers checkpointing to S3.",
+        "explanation": "Lowest-price with two types packs capacity into the cheapest pools, which are the ones most likely to be interrupted."
+      },
+      {
         "key": "D",
-        "text": "Spot in a single AZ with capacity-optimized allocation across many types, scaled on the queue depth.",
-        "explanation": "One AZ limits the number of Spot pools to draw from, so a shortage in that zone can stall every worker."
+        "text": "Spot across many instance types and AZs with price-capacity-optimized allocation, a small On-Demand base, idempotent workers."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "D",
     "explanation": "Interruptible queue workers suit Spot. Diversifying across many instance types and AZs, with the price-capacity-optimized strategy, draws from the deepest pools at a low price; a small On-Demand base keeps jobs moving during shortages, and idempotent workers make retries safe. Lowest-price with few types, a single AZ, or a peak-sized commitment each fail on interruption risk or cost. Read more: https://docs.aws.amazon.com/autoscaling/ec2/userguide/allocation-strategies.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/allocation-strategies.html",
@@ -700,25 +700,25 @@
     "options": [
       {
         "key": "A",
-        "text": "Inbound Resolver endpoints for queries from on premises, and outbound endpoints with forwarding rules for the on-premises domain."
-      },
-      {
-        "key": "B",
-        "text": "Outbound endpoints with forwarding rules for the on-premises domain, and on-premises DNS forwarding to each VPC's .2 resolver.",
-        "explanation": "The VPC's .2 resolver only answers queries from inside the VPC, so on-premises servers need an inbound endpoint to reach it."
-      },
-      {
-        "key": "C",
         "text": "Outbound endpoints with forwarding rules, and the private hosted zones associated with the Direct Connect gateway.",
         "explanation": "Private hosted zones can be associated with VPCs only, not with a Direct Connect gateway or an on-premises network."
       },
       {
-        "key": "D",
+        "key": "B",
+        "text": "Inbound Resolver endpoints for queries from on premises, and outbound endpoints with forwarding rules for the on-premises domain."
+      },
+      {
+        "key": "C",
         "text": "A Route 53 Profile shared to the VPCs with the private hosted zones, and system rules for the on-premises domain.",
         "explanation": "A Profile shares DNS settings among VPCs, and system rules resolve locally; neither forwards queries to or from on premises."
+      },
+      {
+        "key": "D",
+        "text": "Outbound endpoints with forwarding rules for the on-premises domain, and on-premises DNS forwarding to each VPC's .2 resolver.",
+        "explanation": "The VPC's .2 resolver only answers queries from inside the VPC, so on-premises servers need an inbound endpoint to reach it."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "B",
     "explanation": "Route 53 Resolver handles both directions: an inbound endpoint gives on-premises DNS servers IP addresses in the VPC to forward private-zone queries to, and an outbound endpoint plus a forwarding rule sends queries for the on-premises domain to the on-premises servers. The .2 resolver is not reachable from outside the VPC, and private hosted zones associate only with VPCs. Read more: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html",
@@ -733,7 +733,8 @@
     "options": [
       {
         "key": "A",
-        "text": "A GuardDuty delegated administrator set in each Region, with auto-enable for all organization members turned on in each Region."
+        "text": "GuardDuty enabled in the management account in each Region, with member accounts added by invitation from it.",
+        "explanation": "Invitations must be sent and accepted account by account, and AWS advises against running security services from the management account."
       },
       {
         "key": "B",
@@ -742,8 +743,7 @@
       },
       {
         "key": "C",
-        "text": "GuardDuty enabled in the management account in each Region, with member accounts added by invitation from it.",
-        "explanation": "Invitations must be sent and accepted account by account, and AWS advises against running security services from the management account."
+        "text": "A GuardDuty delegated administrator set in each Region, with auto-enable for all organization members turned on in each Region."
       },
       {
         "key": "D",
@@ -751,7 +751,7 @@
         "explanation": "Findings end up spread across one bucket per account, so the team has no central place to see them."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "C",
     "explanation": "GuardDuty is Regional, so the delegated administrator is designated, and organization auto-enable is turned on, in each Region; the admin account then sees findings for all members in that Region, and new accounts are enrolled automatically. Configuring one Region leaves gaps elsewhere, invitations do not scale, and per-account exports are not central. Read more: https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_organizations.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_organizations.html",
@@ -766,12 +766,13 @@
     "options": [
       {
         "key": "A",
-        "text": "Amazon EFS in Regional mode, mounted over NFS by the instances through a mount target in each AZ."
+        "text": "Amazon FSx for OpenZFS in a Single-AZ deployment, mounted over NFS by the instances in both AZs.",
+        "explanation": "Single-AZ FSx does not survive the loss of its AZ, and FSx needs storage capacity provisioned up front."
       },
       {
         "key": "B",
-        "text": "Amazon FSx for OpenZFS in a Single-AZ deployment, mounted over NFS by the instances in both AZs.",
-        "explanation": "Single-AZ FSx does not survive the loss of its AZ, and FSx needs storage capacity provisioned up front."
+        "text": "Mountpoint for Amazon S3 on each instance, with the bucket's documents prefix mounted as the shared directory.",
+        "explanation": "Mountpoint does not support editing existing files or file locking, so it does not behave like an NFS share."
       },
       {
         "key": "C",
@@ -780,11 +781,10 @@
       },
       {
         "key": "D",
-        "text": "Mountpoint for Amazon S3 on each instance, with the bucket's documents prefix mounted as the shared directory.",
-        "explanation": "Mountpoint does not support editing existing files or file locking, so it does not behave like an NFS share."
+        "text": "Amazon EFS in Regional mode, mounted over NFS by the instances through a mount target in each AZ."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "D",
     "explanation": "EFS is a managed NFSv4 file system that stores data across multiple AZs in Regional mode and grows and shrinks with the data, so the app mounts it the same way it mounted the old NFS server. Single-AZ FSx does not survive an AZ loss, EBS Multi-Attach is confined to one AZ, and Mountpoint for S3 does not offer full file-system semantics. Read more: https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html",
@@ -803,8 +803,8 @@
       },
       {
         "key": "B",
-        "text": "S3 Cross-Region Replication and an RDS cross-Region read replica, relying on the Multi-AZ compute for the rest.",
-        "explanation": "Data would survive, but the compute and networking still exist in the failed Region alone, with nothing ready to run elsewhere."
+        "text": "A warm standby stack running scaled down in a second Region, with continuous database replication to it.",
+        "explanation": "This meets the RTO but pays for running infrastructure around the clock, which an 8-hour RTO does not need."
       },
       {
         "key": "C",
@@ -813,8 +813,8 @@
       },
       {
         "key": "D",
-        "text": "A warm standby stack running scaled down in a second Region, with continuous database replication to it.",
-        "explanation": "This meets the RTO but pays for running infrastructure around the clock, which an 8-hour RTO does not need."
+        "text": "S3 Cross-Region Replication and an RDS cross-Region read replica, relying on the Multi-AZ compute for the rest.",
+        "explanation": "Data would survive, but the compute and networking still exist in the failed Region alone, with nothing ready to run elsewhere."
       }
     ],
     "correctKey": "A",
@@ -832,17 +832,17 @@
     "options": [
       {
         "key": "A",
-        "text": "Amazon DynamoDB in on-demand capacity mode, with player ID as the partition key."
+        "text": "Amazon Aurora Serverless v2 PostgreSQL with player ID as the primary key and Aurora Replicas for reads.",
+        "explanation": "All writes go to one writer instance, and its capacity range and connection limits must be planned for the 10x spikes."
       },
       {
         "key": "B",
-        "text": "Amazon ElastiCache Serverless for Valkey as the system of record, with daily snapshots for durability.",
-        "explanation": "ElastiCache is an in-memory cache; writes made since the last snapshot can be lost, so it is not a durable system of record."
+        "text": "Amazon DynamoDB in on-demand capacity mode, with player ID as the partition key."
       },
       {
         "key": "C",
-        "text": "Amazon Aurora Serverless v2 PostgreSQL with player ID as the primary key and Aurora Replicas for reads.",
-        "explanation": "All writes go to one writer instance, and its capacity range and connection limits must be planned for the 10x spikes."
+        "text": "Amazon ElastiCache Serverless for Valkey as the system of record, with daily snapshots for durability.",
+        "explanation": "ElastiCache is an in-memory cache; writes made since the last snapshot can be lost, so it is not a durable system of record."
       },
       {
         "key": "D",
@@ -850,7 +850,7 @@
         "explanation": "S3 request latency is tens of milliseconds, not single-digit, and per-prefix request rates need planning."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "B",
     "explanation": "DynamoDB serves key-value reads and writes at single-digit millisecond latency at any scale, replicates across three AZs, and in on-demand mode absorbs sudden spikes with no capacity to plan or servers to manage; a high-cardinality player ID spreads load across partitions. A cache is not durable, Aurora has a single writer to size, and S3 is too slow for this access pattern. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html",
@@ -865,7 +865,8 @@
     "options": [
       {
         "key": "A",
-        "text": "Gateway VPC endpoints for S3 and DynamoDB, added to the route tables of the private subnets."
+        "text": "One NAT gateway in a single AZ shared by the private subnets of the other AZs to cut hourly charges.",
+        "explanation": "Processing charges stay the same, cross-AZ transfer is added, and an AZ failure takes out egress for every subnet."
       },
       {
         "key": "B",
@@ -874,16 +875,15 @@
       },
       {
         "key": "C",
-        "text": "NAT instances on Graviton in each AZ in place of the NAT gateways, keeping the same routes.",
-        "explanation": "The traffic still flows through NAT, now on instances the team must patch and scale; it does not use a private path."
+        "text": "Gateway VPC endpoints for S3 and DynamoDB, added to the route tables of the private subnets."
       },
       {
         "key": "D",
-        "text": "One NAT gateway in a single AZ shared by the private subnets of the other AZs to cut hourly charges.",
-        "explanation": "Processing charges stay the same, cross-AZ transfer is added, and an AZ failure takes out egress for every subnet."
+        "text": "NAT instances on Graviton in each AZ in place of the NAT gateways, keeping the same routes.",
+        "explanation": "The traffic still flows through NAT, now on instances the team must patch and scale; it does not use a private path."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "C",
     "explanation": "Gateway endpoints for S3 and DynamoDB are route-table targets with no hourly or data processing charge, so traffic to those services leaves the NAT path entirely. Interface endpoints also bypass NAT but are billed per hour and per GB, NAT instances still carry the traffic, and consolidating NAT gateways keeps processing charges while adding cross-AZ transfer and a single point of failure. Read more: https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html",
@@ -898,25 +898,25 @@
     "options": [
       {
         "key": "A",
-        "text": "A tag policy defining the application tag, activated as a cost allocation tag, with Cost Categories built on it for chargeback."
-      },
-      {
-        "key": "B",
         "text": "Cost Explorer grouped by linked account, with each account mapped to an application in a monthly export.",
         "explanation": "Mapping accounts to applications breaks down where several applications share an account."
       },
       {
-        "key": "C",
+        "key": "B",
         "text": "AWS Budgets for each account with alerts to application owners, and Budgets reports exported to finance each month.",
         "explanation": "Budgets track spend against a threshold per account; they do not split a shared account's costs by application."
       },
       {
-        "key": "D",
+        "key": "C",
         "text": "Tags applied by IaC, then read with the Resource Groups Tagging API and joined to the cost data by a script.",
         "explanation": "Tags that are not activated as cost allocation tags never appear in billing data, so this needs a custom join script."
+      },
+      {
+        "key": "D",
+        "text": "A tag policy defining the application tag, activated as a cost allocation tag, with Cost Categories built on it for chargeback."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "D",
     "explanation": "Cost allocation starts with a consistent tag: a tag policy standardizes the key and values across the organization, activating it as a cost allocation tag makes it appear in Cost Explorer and the cost and usage reports, and Cost Categories group costs into chargeback units with rules, including for shared accounts. Account-level grouping and Budgets cannot split shared accounts, and a tagging-API script rebuilds what billing already offers. Read more: https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html",
@@ -940,13 +940,13 @@
       },
       {
         "key": "C",
-        "text": "AWS Shield Advanced on the ALBs, with automatic application layer DDoS mitigation turned on.",
-        "explanation": "Shield Advanced protects against DDoS and builds its mitigations with WAF rules; it does not filter SQL injection or bad IPs by itself."
+        "text": "AWS Network Firewall in an ingress VPC in each Region, with a managed threat signature rule group for known bad hosts.",
+        "explanation": "Network Firewall inspects within each Region's VPC, not at the edge, and is not a web application firewall for HTTP attacks."
       },
       {
         "key": "D",
-        "text": "AWS Network Firewall in an ingress VPC in each Region, with a managed threat signature rule group for known bad hosts.",
-        "explanation": "Network Firewall inspects within each Region's VPC, not at the edge, and is not a web application firewall for HTTP attacks."
+        "text": "AWS Shield Advanced on the ALBs, with automatic application layer DDoS mitigation turned on.",
+        "explanation": "Shield Advanced protects against DDoS and builds its mitigations with WAF rules; it does not filter SQL injection or bad IPs by itself."
       }
     ],
     "correctKey": "A",
@@ -964,25 +964,25 @@
     "options": [
       {
         "key": "A",
-        "text": "AWS Transform MGN (formerly Application Migration Service), replicating each VM's disks continuously until cutover to EC2."
+        "text": "AWS DMS homogeneous migrations for the databases, and new app servers built from EC2 Image Builder recipes.",
+        "explanation": "Rebuilding servers from recipes is a replatform, not a rehost, and it does not keep each machine's configuration."
       },
       {
         "key": "B",
+        "text": "AWS Transform MGN (formerly Application Migration Service), replicating each VM's disks continuously until cutover to EC2."
+      },
+      {
+        "key": "C",
         "text": "VM Import/Export, exporting each VM as an OVA to S3 and importing it as an AMI during each wave's cutover.",
         "explanation": "Import is a one-time copy taken while the VM is stopped or changing, so each cutover waits for a full export and import."
       },
       {
-        "key": "C",
+        "key": "D",
         "text": "AWS Server Migration Service, scheduling incremental replication of each VM's volumes into AMIs.",
         "explanation": "Server Migration Service was discontinued in 2022; AWS directs rehost migrations to MGN instead."
-      },
-      {
-        "key": "D",
-        "text": "AWS DMS homogeneous migrations for the databases, and new app servers built from EC2 Image Builder recipes.",
-        "explanation": "Rebuilding servers from recipes is a replatform, not a rehost, and it does not keep each machine's configuration."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "B",
     "explanation": "MGN (now AWS Transform MGN, formerly AWS Application Migration Service) is the AWS rehost service: it replicates each source server's disks block by block continuously, so test and cutover instances launch on EC2 from an up-to-date copy and the cutover window is short. VM Import/Export is a one-off image copy, Server Migration Service is discontinued, and rebuilding servers changes their configuration. Read more: https://docs.aws.amazon.com/mgn/latest/ug/what-is-mgn.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/mgn/latest/ug/what-is-mgn.html",
@@ -998,7 +998,8 @@
     "options": [
       {
         "key": "A",
-        "text": "Tag location 1's prefixes with community 7224:7300 and location 2's with 7224:7100, relying on the TGW preferring DX over VPN routes."
+        "text": "Advertise more specific prefixes over the VPN and the summary prefixes over both VIFs, with AS_PATH prepended on location 2.",
+        "explanation": "Longest prefix match is evaluated first, so the more specific VPN routes would win over both DX paths."
       },
       {
         "key": "B",
@@ -1007,16 +1008,15 @@
       },
       {
         "key": "C",
-        "text": "Tag location 1's prefixes with 7224:7300 and location 2's with 7224:7100, and add static TGW routes for the prefixes to the VPN.",
-        "explanation": "Static routes beat propagated routes in a TGW route table, so the VPN would carry the traffic even with both DX paths up."
+        "text": "Tag location 1's prefixes with community 7224:7300 and location 2's with 7224:7100, relying on the TGW preferring DX over VPN routes."
       },
       {
         "key": "D",
-        "text": "Advertise more specific prefixes over the VPN and the summary prefixes over both VIFs, with AS_PATH prepended on location 2.",
-        "explanation": "Longest prefix match is evaluated first, so the more specific VPN routes would win over both DX paths."
+        "text": "Tag location 1's prefixes with 7224:7300 and location 2's with 7224:7100, and add static TGW routes for the prefixes to the VPN.",
+        "explanation": "Static routes beat propagated routes in a TGW route table, so the VPN would carry the traffic even with both DX paths up."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "C",
     "explanation": "For traffic leaving AWS over Direct Connect, the local preference communities set on your advertisements decide between connections: 7224:7300 is high and 7224:7100 low, so location 1 becomes primary. In the Transit Gateway route table, with equal prefixes, routes propagated from a Direct Connect gateway are preferred over VPN routes, so the VPN is used only when no DX route remains. Static routes and longer prefixes override that preference. Read more: https://docs.aws.amazon.com/directconnect/latest/UserGuide/routing-and-bgp.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/directconnect/latest/UserGuide/routing-and-bgp.html",
@@ -1037,11 +1037,12 @@
     "options": [
       {
         "key": "A",
-        "text": "Deny iam:CreateRole and iam:PutRolePermissionsBoundary unless iam:PermissionsBoundary equals the approved boundary policy ARN."
+        "text": "Deny iam:PassRole unless the role being passed has a Boundary=Approved tag set when the role was created.",
+        "explanation": "Admins can set any tag they like, and the tag says nothing about which boundary is attached, so nothing is enforced."
       },
       {
         "key": "B",
-        "text": "Deny iam:DeleteRolePermissionsBoundary, and any edit of the approved boundary policy, to principals outside the platform team."
+        "text": "Deny iam:CreateRole and iam:PutRolePermissionsBoundary unless iam:PermissionsBoundary equals the approved boundary policy ARN."
       },
       {
         "key": "C",
@@ -1050,8 +1051,7 @@
       },
       {
         "key": "D",
-        "text": "Deny iam:PassRole unless the role being passed has a Boundary=Approved tag set when the role was created.",
-        "explanation": "Admins can set any tag they like, and the tag says nothing about which boundary is attached, so nothing is enforced."
+        "text": "Deny iam:DeleteRolePermissionsBoundary, and any edit of the approved boundary policy, to principals outside the platform team."
       },
       {
         "key": "E",
@@ -1060,8 +1060,8 @@
       }
     ],
     "correctKeys": [
-      "A",
-      "B"
+      "B",
+      "D"
     ],
     "explanation": "Delegating role creation safely needs two guarantees, both enforced by SCPs so account admins cannot undo them: roles can only be created (or have their boundary set) with the approved boundary, checked with the iam:PermissionsBoundary condition key, and nobody outside the platform team can delete a role's boundary or edit the boundary policy (CreatePolicyVersion, SetDefaultPolicyVersion, DeletePolicy). Restricting which permissions policy is attached does not set a boundary, and admins can set any tag they like. Read more: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html",
     "source": "generated",
@@ -1083,12 +1083,13 @@
     "options": [
       {
         "key": "A",
-        "text": "Accept requests in both Regions, but send ledger writes and idempotency checks to one writer Region, with tested Aurora Global Database failover."
+        "text": "Aurora Global Database with write forwarding from the secondary, and idempotency keys in DynamoDB global tables using eventual consistency.",
+        "explanation": "Each Region checks its own eventually consistent replica, so the same payment can pass the idempotency check in both Regions."
       },
       {
         "key": "B",
-        "text": "Aurora Global Database with write forwarding from the secondary, and idempotency keys in DynamoDB global tables using eventual consistency.",
-        "explanation": "Each Region checks its own eventually consistent replica, so the same payment can pass the idempotency check in both Regions."
+        "text": "DynamoDB global tables as the ledger with last-writer-wins, and SQS FIFO deduplication IDs blocking repeat charges across Regions.",
+        "explanation": "FIFO deduplication is per queue and per Region for five minutes, and last-writer-wins can silently drop a ledger write."
       },
       {
         "key": "C",
@@ -1097,11 +1098,10 @@
       },
       {
         "key": "D",
-        "text": "DynamoDB global tables as the ledger with last-writer-wins, and SQS FIFO deduplication IDs blocking repeat charges across Regions.",
-        "explanation": "FIFO deduplication is per queue and per Region for five minutes, and last-writer-wins can silently drop a ledger write."
+        "text": "Accept requests in both Regions, but send ledger writes and idempotency checks to one writer Region, with tested Aurora Global Database failover."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "D",
     "explanation": "Exactly-once charging needs one place that serializes the idempotency check and the ledger write. Both Regions can take requests, but they forward those writes to a single writer Region; Aurora Global Database keeps a secondary ready to promote within minutes. Eventually consistent replicas, independent writers and SQS FIFO deduplication are all Region-local or asynchronous, so a retry hitting the other Region can be charged again. Read more: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html",
@@ -1131,13 +1131,13 @@
       },
       {
         "key": "C",
-        "text": "Object Lock in compliance mode, SSE-S3 encryption, and MFA Delete on the bucket with CloudTrail management events.",
-        "explanation": "Retention is protected, but SSE-S3 lets anyone with s3:GetObject read the logs; there is no separate approval for decryption."
+        "text": "Object Lock in compliance mode, and SSE-KMS with a key in the log archive account whose key policy lets the operators decrypt.",
+        "explanation": "The operators already hold decrypt on a key in their own account, so they can read the logs without anyone's approval."
       },
       {
         "key": "D",
-        "text": "Object Lock in compliance mode, and SSE-KMS with a key in the log archive account whose key policy lets the operators decrypt.",
-        "explanation": "The operators already hold decrypt on a key in their own account, so they can read the logs without anyone's approval."
+        "text": "Object Lock in compliance mode, SSE-S3 encryption, and MFA Delete on the bucket with CloudTrail management events.",
+        "explanation": "Retention is protected, but SSE-S3 lets anyone with s3:GetObject read the logs; there is no separate approval for decryption."
       }
     ],
     "correctKey": "A",
@@ -1161,25 +1161,25 @@
     "options": [
       {
         "key": "A",
-        "text": "Assess the app's RAC dependencies, then compare re-architecting for a single writer with moving RAC to Oracle Database@AWS."
-      },
-      {
-        "key": "B",
-        "text": "Migrate to RDS for Oracle Multi-AZ, whose synchronous standby gives the app the active instances it expects from RAC.",
-        "explanation": "The Multi-AZ standby is passive and cannot serve traffic, so it does not provide RAC's multiple active instances."
-      },
-      {
-        "key": "C",
         "text": "Migrate to RDS Custom for Oracle, whose OS-level access lets the team install and configure Oracle RAC itself.",
         "explanation": "RDS Custom gives OS access to a single-instance database; it does not support Oracle RAC."
       },
       {
-        "key": "D",
+        "key": "B",
+        "text": "Assess the app's RAC dependencies, then compare re-architecting for a single writer with moving RAC to Oracle Database@AWS."
+      },
+      {
+        "key": "C",
         "text": "Load RDS for Oracle with AWS DMS, then point the app's RAC services at read replicas to spread the load.",
         "explanation": "RDS for Oracle read replicas are read-only, so they cannot take the writes the app sends to each RAC instance."
+      },
+      {
+        "key": "D",
+        "text": "Migrate to RDS for Oracle Multi-AZ, whose synchronous standby gives the app the active instances it expects from RAC.",
+        "explanation": "The Multi-AZ standby is passive and cannot serve traffic, so it does not provide RAC's multiple active instances."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "B",
     "explanation": "Neither RDS for Oracle nor RDS Custom for Oracle supports Real Application Clusters; Multi-AZ uses a passive standby and read replicas are read-only. An app that relies on several active instances on shared storage needs an assessment first: re-architect it to run on a single writer, or keep RAC on Oracle Database@AWS, which runs Oracle Exadata Database Service in AWS data centers. Read more: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Oracle.Concepts.FeatureSupport.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Oracle.Concepts.FeatureSupport.html",
@@ -1204,7 +1204,8 @@
       },
       {
         "key": "B",
-        "text": "Redesign the partition key to combine tenantId with a high-cardinality attribute such as deviceId that the queries already use."
+        "text": "Add a DynamoDB Accelerator (DAX) cluster in front of the table so writes for the hot tenant are absorbed by the cache.",
+        "explanation": "DAX is a write-through cache: each write still goes to the table, so the hot partition sees the same load."
       },
       {
         "key": "C",
@@ -1213,18 +1214,17 @@
       },
       {
         "key": "D",
-        "text": "Add a DynamoDB Accelerator (DAX) cluster in front of the table so writes for the hot tenant are absorbed by the cache.",
-        "explanation": "DAX is a write-through cache: each write still goes to the table, so the hot partition sees the same load."
+        "text": "Add a global secondary index keyed on tenantId and timestamp so the hot tenant's writes are spread to the index.",
+        "explanation": "The index has the same hot key, and a throttled GSI can throttle writes to the base table as well."
       },
       {
         "key": "E",
-        "text": "Add a global secondary index keyed on tenantId and timestamp so the hot tenant's writes are spread to the index.",
-        "explanation": "The index has the same hot key, and a throttled GSI can throttle writes to the base table as well."
+        "text": "Redesign the partition key to combine tenantId with a high-cardinality attribute such as deviceId that the queries already use."
       }
     ],
     "correctKeys": [
       "A",
-      "B"
+      "E"
     ],
     "explanation": "Every partition is limited to 1,000 write units per second whatever the table's capacity mode, so a key that takes 70% of writes throttles. Spreading that tenant's writes across several partition key values, either by write sharding with a suffix or by a higher-cardinality key the queries can still use, removes the hot spot. Table capacity, DAX and a GSI with the same key leave all writes on one key. Read more: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html",
     "source": "generated",
@@ -1245,25 +1245,25 @@
     "options": [
       {
         "key": "A",
-        "text": "Add an S3 gateway endpoint, keep chatty tiers AZ-local where resilience allows, and replicate aggregates instead of raw data."
-      },
-      {
-        "key": "B",
         "text": "Buy a Compute Savings Plan sized to the current monthly bill, so the data transfer and NAT charges are billed at the plan rate.",
         "explanation": "Savings Plans discount compute usage; data transfer, NAT processing and S3 charges are not covered by them."
       },
       {
+        "key": "B",
+        "text": "Enable S3 Intelligent-Tiering on the replicated raw data and buy Compute Savings Plans for the EC2 fleet before anything else.",
+        "explanation": "Neither touches the transfer, NAT and replication charges that dominate the bill."
+      },
+      {
         "key": "C",
-        "text": "Move the chatty services into a single AZ per Region and add S3 interface endpoints to take the traffic off the NAT gateways.",
-        "explanation": "This trades away AZ resilience, and interface endpoints add hourly and per-GB charges a free gateway endpoint avoids."
+        "text": "Add an S3 gateway endpoint, keep chatty tiers AZ-local where resilience allows, and replicate aggregates instead of raw data."
       },
       {
         "key": "D",
-        "text": "Enable S3 Intelligent-Tiering on the replicated raw data and buy Compute Savings Plans for the EC2 fleet before anything else.",
-        "explanation": "Neither touches the transfer, NAT and replication charges that dominate the bill."
+        "text": "Move the chatty services into a single AZ per Region and add S3 interface endpoints to take the traffic off the NAT gateways.",
+        "explanation": "This trades away AZ resilience, and interface endpoints add hourly and per-GB charges a free gateway endpoint avoids."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "C",
     "explanation": "The dominant charges are data movement, which commitments do not discount. Breaking the bill down by usage type confirms the drivers; then an S3 gateway endpoint removes NAT processing for S3, AZ-affine routing between chatty tiers cuts inter-AZ transfer where resilience allows, and replicating aggregated data shrinks cross-Region transfer. Savings Plans can follow for the stable compute. Read more: https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/plan-for-data-transfer.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/plan-for-data-transfer.html",
@@ -1283,25 +1283,25 @@
     "options": [
       {
         "key": "A",
-        "text": "Move the AWS records into a subdomain such as aws.corp.internal in its own zone, and keep forwarding corp.internal on premises."
+        "text": "Reassociate the private hosted zone with the VPCs after the rule, so the zone's newer association takes precedence.",
+        "explanation": "Resolver does not rank by association order; for the same domain name a forwarding rule wins over a private hosted zone."
       },
       {
         "key": "B",
-        "text": "Add a second outbound endpoint and more IP addresses to the existing one, so the forwarding rule has more capacity.",
-        "explanation": "The queries are being answered by the forwarding rule as configured; capacity is not the problem."
-      },
-      {
-        "key": "C",
         "text": "Create a system rule for corp.internal so Resolver answers it from the private hosted zone, ending forwarding to on premises.",
         "explanation": "The AWS records resolve again, but the on-premises legacy records under corp.internal stop resolving from the VPCs."
       },
       {
+        "key": "C",
+        "text": "Add a second outbound endpoint and more IP addresses to the existing one, so the forwarding rule has more capacity.",
+        "explanation": "The queries are being answered by the forwarding rule as configured; capacity is not the problem."
+      },
+      {
         "key": "D",
-        "text": "Reassociate the private hosted zone with the VPCs after the rule, so the zone's newer association takes precedence.",
-        "explanation": "Resolver does not rank by association order; for the same domain name a forwarding rule wins over a private hosted zone."
+        "text": "Move the AWS records into a subdomain such as aws.corp.internal in its own zone, and keep forwarding corp.internal on premises."
       }
     ],
-    "correctKey": "A",
+    "correctKey": "D",
     "explanation": "When a forwarding rule and a private hosted zone cover the same domain name, Resolver uses the forwarding rule, so the AWS-hosted names are sent on premises and fail. Resolver picks the most specific match, so giving the AWS records their own subdomain zone (aws.corp.internal) lets them resolve locally while everything else under corp.internal still forwards on premises. Read more: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zone-private-considerations.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zone-private-considerations.html",
@@ -1325,13 +1325,13 @@
       },
       {
         "key": "B",
-        "text": "Run each service from the management account with organization-wide auto-enable, limited to security staff by IAM policies.",
-        "explanation": "This puts daily security operations in the management account, which is what the requirement rules out."
+        "text": "Make the security account delegated administrator for Security Hub alone, relying on its integrations to enable the other services.",
+        "explanation": "Security Hub ingests findings from integrated services; it does not enable or administer GuardDuty, Config or Access Analyzer."
       },
       {
         "key": "C",
-        "text": "Make the security account delegated administrator for Security Hub alone, relying on its integrations to enable the other services.",
-        "explanation": "Security Hub ingests findings from integrated services; it does not enable or administer GuardDuty, Config or Access Analyzer."
+        "text": "Run each service from the management account with organization-wide auto-enable, limited to security staff by IAM policies.",
+        "explanation": "This puts daily security operations in the management account, which is what the requirement rules out."
       },
       {
         "key": "D",
@@ -1360,31 +1360,31 @@
     "options": [
       {
         "key": "A",
-        "text": "When the primary is reachable, stop or drain writes there and wait for replication to catch up before promoting the DR database."
+        "text": "Use Route 53 ARC routing controls so traffic shifts through an explicit, audited switch rather than health checks.",
+        "explanation": "Routing controls make the traffic switch deliberate, but they do not sequence it with database replication."
       },
       {
         "key": "B",
-        "text": "Monitor replication lag continuously, and have the runbook check it against the RPO before deciding to promote the DR copy."
-      },
-      {
-        "key": "C",
-        "text": "Lower the TTL on the application's Route 53 records to 10 seconds so clients move to the DR Region sooner.",
-        "explanation": "A shorter TTL moves clients faster, but they still reach a replica that has not caught up."
-      },
-      {
-        "key": "D",
         "text": "Scale the DR Region's application tier to full production size before the switch so it can take the full load at once.",
         "explanation": "Capacity helps the DR Region serve traffic; it does nothing about data that has not replicated yet."
       },
       {
+        "key": "C",
+        "text": "When the primary is reachable, stop or drain writes there and wait for replication to catch up before promoting the DR database."
+      },
+      {
+        "key": "D",
+        "text": "Monitor replication lag continuously, and have the runbook check it against the RPO before deciding to promote the DR copy."
+      },
+      {
         "key": "E",
-        "text": "Use Route 53 ARC routing controls so traffic shifts through an explicit, audited switch rather than health checks.",
-        "explanation": "Routing controls make the traffic switch deliberate, but they do not sequence it with database replication."
+        "text": "Lower the TTL on the application's Route 53 records to 10 seconds so clients move to the DR Region sooner.",
+        "explanation": "A shorter TTL moves clients faster, but they still reach a replica that has not caught up."
       }
     ],
     "correctKeys": [
-      "A",
-      "B"
+      "C",
+      "D"
     ],
     "explanation": "Stale reads and lost writes come from promoting an asynchronous replica before it has caught up. A planned failover should stop writes at the primary and let replication drain before promotion, and the runbook needs current lag measured against the RPO to decide when promotion is acceptable. TTLs, capacity and routing controls change how traffic moves, not what data is in the DR Region. Read more: https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html",
     "source": "generated",
