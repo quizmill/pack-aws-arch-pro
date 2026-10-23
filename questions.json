@@ -3,7 +3,7 @@
     "id": "pack-aws-arch-pro-orgs-001",
     "categoryKey": "orgs",
     "difficulty": 5,
-    "prompt": "A company uses AWS Organizations with prod, security and sandbox OUs. Developers in workload accounts must launch EC2 instances from approved AMIs, but the security team's incident-response role must still be able to launch its own forensic AMIs in every account. What is the best guardrail?",
+    "prompt": "A company uses AWS Organizations with a Security OU and several workload OUs. Developers in workload accounts must launch EC2 instances from approved AMIs, but the security team's incident-response role must still be able to launch its own forensic AMIs in every account. What is the best guardrail?",
     "options": [
       {
         "key": "A",
@@ -186,12 +186,12 @@
       },
       {
         "key": "D",
-        "text": "Connect the two transit gateways with Site-to-Site VPN attachments over the internet, using BGP to exchange routes.",
-        "explanation": "This works but runs over the internet and adds VPN throughput limits; TGW peering uses the encrypted AWS backbone."
+        "text": "Inter-Region VPC peering between each pair of VPCs that need to talk, leaving the transit gateways for traffic within a Region.",
+        "explanation": "This works, but needs a peering connection and routes for every VPC pair, which does not scale to many VPCs."
       }
     ],
     "correctKey": "A",
-    "explanation": "Inter-Region Transit Gateway peering keeps each Region's TGW independent and carries traffic on the AWS global network, encrypted. Peering attachments do not propagate routes, so each TGW route table needs static routes for the remote CIDRs pointing at the peering attachment. A TGW cannot attach VPCs in another Region, and VPN between TGWs is the internet-based fallback, not the recommended design. Read more: https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering.html",
+    "explanation": "Inter-Region Transit Gateway peering keeps each Region's TGW independent and carries traffic on the AWS global network, encrypted. Peering attachments do not propagate routes, so each TGW route table needs static routes for the remote CIDRs pointing at the peering attachment. A TGW cannot attach VPCs in another Region, and per-pair VPC peering grows with the square of the VPC count. Read more: https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering.html",
     "reviewStatus": "draft",
@@ -201,7 +201,7 @@
     "id": "pack-aws-arch-pro-migration-001",
     "categoryKey": "migration",
     "difficulty": 5,
-    "prompt": "A 200 TB Oracle database must move to Amazon RDS for Oracle with less than 1 hour of downtime at cutover. The source stays fully active and keeps taking writes until the cutover starts. Which strategy fits best?",
+    "prompt": "A 50 TB Oracle database must move to Amazon RDS for Oracle with less than 1 hour of downtime at cutover. The source stays fully active and keeps taking writes until the cutover starts. Which strategy fits best?",
     "options": [
       {
         "key": "A",
@@ -210,21 +210,21 @@
       {
         "key": "B",
         "text": "Restore an RMAN backup from Amazon S3 into the RDS for Oracle instance at the start of the outage window.",
-        "explanation": "RDS for Oracle does not support restoring RMAN backups, and a 200 TB restore would not fit in an hour anyway."
+        "explanation": "RDS for Oracle does not support restoring RMAN backups, and a 50 TB restore would not fit in an hour anyway."
       },
       {
         "key": "C",
-        "text": "Oracle Data Pump export to S3, imported into RDS through the S3 integration during the outage window.",
-        "explanation": "Data Pump can seed the target, but a 200 TB export and import is far longer than a 1-hour window."
+        "text": "Oracle Data Pump for the initial load, then a DMS replication task for changes, started when the import finishes.",
+        "explanation": "Changes made while the export and import ran are never captured; CDC must start from the SCN the export was consistent to."
       },
       {
         "key": "D",
-        "text": "AWS DMS full load only, scheduled to start when writes are stopped at the beginning of the outage window.",
-        "explanation": "Without CDC the whole 200 TB has to copy inside the outage window, which cannot finish in an hour."
+        "text": "An AWS DMS full-load task, scheduled to start when writes are stopped at the beginning of the outage window.",
+        "explanation": "Without CDC the whole 50 TB has to copy inside the outage window, which cannot finish in an hour."
       }
     ],
     "correctKey": "A",
-    "explanation": "With a full load plus CDC task, DMS copies the existing data while the source stays live, then its change data capture applies ongoing changes from the redo logs until replication lag is close to zero; the outage is only the time to stop writes, let the last changes apply and switch connections. Backup or export approaches move all 200 TB inside the window, and RDS for Oracle cannot restore RMAN backups. Read more: https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
+    "explanation": "With a full load plus CDC task, DMS copies the existing data while the source stays live, then its change data capture applies ongoing changes from the redo logs until replication lag is close to zero; the outage is only the time to stop writes, let the last changes apply and switch connections. Backup or full-load-only approaches move all 50 TB inside the window, RDS for Oracle cannot restore RMAN backups, and a CDC task that starts after an import misses every change made during the load. Read more: https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
     "reviewStatus": "draft",
@@ -252,12 +252,12 @@
       },
       {
         "key": "D",
-        "text": "A Network Load Balancer listener per service, with target groups splitting /checkout from the other paths.",
-        "explanation": "An NLB works at layer 4 and cannot see HTTP paths, so it has no way to route on /checkout."
+        "text": "An ALB listener rule with a host header condition for checkout.example.com, forwarding to the container service.",
+        "explanation": "A host header rule matches the hostname, so it needs a new name; it cannot pick out /checkout on the existing domain."
       }
     ],
     "correctKey": "A",
-    "explanation": "ALB listener rules evaluate layer-7 conditions such as path patterns, so a rule for /checkout* can forward to the new service while the default rule keeps sending everything else to the monolith: the strangler-fig pattern. Weighted target groups split traffic by percentage, Route 53 cannot route on paths, and an NLB has no view of HTTP. Read more: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-condition-types.html",
+    "explanation": "ALB listener rules evaluate layer-7 conditions such as path patterns, so a rule for /checkout* can forward to the new service while the default rule keeps sending everything else to the monolith: the strangler-fig pattern. Weighted target groups split traffic by percentage, and host header rules or Route 53 records route on names, not paths. Read more: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-condition-types.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-condition-types.html",
     "reviewStatus": "draft",
@@ -399,7 +399,7 @@
     "id": "pack-aws-arch-pro-security-001",
     "categoryKey": "security",
     "difficulty": 5,
-    "prompt": "A SaaS platform stores every tenant's objects in one shared S3 bucket under a per-tenant prefix. The security team needs tenant isolation that still holds if the application code has a bug that requests the wrong tenant's key. What is the best additional control?",
+    "prompt": "A SaaS platform stores every tenant's objects in one shared S3 bucket under a per-tenant prefix. The security team needs tenant isolation that still holds if the application code has a bug that requests an object under the wrong tenant's prefix. What is the best additional control?",
     "options": [
       {
         "key": "A",
@@ -729,7 +729,7 @@
     "id": "pack-aws-arch-pro-security-004",
     "categoryKey": "security",
     "difficulty": 5,
-    "prompt": "A central security team needs Amazon GuardDuty findings from all accounts in all enabled Regions in one place, with GuardDuty switched on automatically in new accounts. What should they configure?",
+    "prompt": "A central security team needs GuardDuty administered from one security account for all member accounts in every enabled Region, with GuardDuty switched on automatically in new accounts. What should they configure?",
     "options": [
       {
         "key": "A",
@@ -795,11 +795,11 @@
     "id": "pack-aws-arch-pro-dr-004",
     "categoryKey": "dr",
     "difficulty": 5,
-    "prompt": "A company runs its workload in one Region using RDS Multi-AZ, EC2 Auto Scaling across three AZs, and S3. The board now requires recovery from a Region-wide outage within 8 hours. What must the architect add?",
+    "prompt": "A company runs its workload in one Region using RDS Multi-AZ, EC2 Auto Scaling across three AZs, and S3. The board now requires recovery from a Region-wide outage within 8 hours, through a repeatable procedure rehearsed twice a year, at the lowest ongoing cost. What must the architect add?",
     "options": [
       {
         "key": "A",
-        "text": "Cross-Region copies of the data, infrastructure as code that can build the stack in a second Region, and a tested runbook."
+        "text": "Cross-Region copies of the data, infrastructure as code that can build the stack in a second Region, and a rehearsed runbook."
       },
       {
         "key": "B",
@@ -808,17 +808,17 @@
       },
       {
         "key": "C",
-        "text": "A fourth AZ for the Auto Scaling group and an RDS Multi-AZ DB cluster with two readable standbys in the Region.",
-        "explanation": "More AZs and standbys raise availability inside the Region, but all of them fail together in a Region-wide outage."
+        "text": "AWS Backup copies to a second Region, with the stack rebuilt there from the console by the on-call team during an outage.",
+        "explanation": "A console rebuild is not repeatable: settings get missed under pressure, and there is nothing consistent to rehearse."
       },
       {
         "key": "D",
-        "text": "AWS Backup plans for RDS, EC2 and S3 with daily backups kept in a locked vault in the same Region.",
-        "explanation": "Backups stored in the same Region are unavailable in a Region-wide outage, and there is no plan to rebuild elsewhere."
+        "text": "A warm standby stack running scaled down in a second Region, with continuous database replication to it.",
+        "explanation": "This meets the RTO but pays for running infrastructure around the clock, which an 8-hour RTO does not need."
       }
     ],
     "correctKey": "A",
-    "explanation": "Multi-AZ protects against the loss of an AZ, not a Region. Region-level DR needs the data in a second Region (backup copies or replication), a way to stand up the infrastructure there (IaC), and a failover procedure that has been tested. Replicating data alone, adding AZs, or keeping backups in the same Region each leave one of those missing. Read more: https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html",
+    "explanation": "Multi-AZ protects against the loss of an AZ, not a Region. Region-level DR needs the data in a second Region (backup copies or replication), a way to stand up the infrastructure there (IaC), and a failover procedure that has been tested. Replicating data alone leaves nothing to run it on, a console rebuild cannot be rehearsed reliably, and a warm standby pays for capacity an 8-hour RTO does not need. Read more: https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html",
     "reviewStatus": "draft",
@@ -1055,15 +1055,15 @@
       },
       {
         "key": "E",
-        "text": "An IAM policy on each account's admin role that denies creating roles without the approved boundary.",
-        "explanation": "This is not an SCP, and an account admin can detach or edit an IAM policy on their own role."
+        "text": "Deny iam:AttachRolePolicy unless the managed policy being attached is the approved boundary policy ARN.",
+        "explanation": "This restricts permissions policies, not the boundary: roles could get no other policy, and none would need a boundary."
       }
     ],
     "correctKeys": [
       "A",
       "B"
     ],
-    "explanation": "Delegating role creation safely needs two guarantees, both enforced by SCPs so account admins cannot undo them: roles can only be created (or have their boundary set) with the approved boundary, checked with the iam:PermissionsBoundary condition key, and nobody outside the platform team can delete a role's boundary or edit the boundary policy (CreatePolicyVersion, SetDefaultPolicyVersion, DeletePolicy). Tags and account-level IAM policies can be changed by the admins they target. Read more: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html",
+    "explanation": "Delegating role creation safely needs two guarantees, both enforced by SCPs so account admins cannot undo them: roles can only be created (or have their boundary set) with the approved boundary, checked with the iam:PermissionsBoundary condition key, and nobody outside the platform team can delete a role's boundary or edit the boundary policy (CreatePolicyVersion, SetDefaultPolicyVersion, DeletePolicy). Restricting which permissions policy is attached does not set a boundary, and admins can set any tag they like. Read more: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html",
     "reviewStatus": "draft",
@@ -1161,7 +1161,7 @@
     "options": [
       {
         "key": "A",
-        "text": "Assess the app's RAC dependencies first, since no RDS option for Oracle supports RAC, and compare re-architecting with Oracle Database@AWS."
+        "text": "Assess the app's RAC dependencies, then compare re-architecting for a single writer with moving RAC to Oracle Database@AWS."
       },
       {
         "key": "B",
@@ -1245,7 +1245,7 @@
     "options": [
       {
         "key": "A",
-        "text": "Break the bill down by usage type, then add an S3 gateway endpoint, keep chatty tiers AZ-local, and replicate aggregates, not raw data."
+        "text": "Add an S3 gateway endpoint, keep chatty tiers AZ-local where resilience allows, and replicate aggregates instead of raw data."
       },
       {
         "key": "B",
