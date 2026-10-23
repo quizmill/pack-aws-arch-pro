@@ -26,9 +26,9 @@
       }
     ],
     "correctKey": "A",
-    "explanation": "An SCP is a preventive control that applies to every principal in the member accounts, account admins included. A Deny on ec2:RunInstances scoped to image resources (arn:aws:ec2:*::image/*), with the approved AMIs excluded, blocks any other image while leaving the instance, volume and network resources of the same call alone, and an aws:PrincipalArn condition exempts the incident-response role. A Config rule only reacts after launch, a permissions boundary binds only the roles it is attached to, and a tag policy validates tags, not images. Read more: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html and https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_syntax.html",
+    "explanation": "An SCP is a preventive control that applies to every principal in the member accounts, account admins included. A Deny on ec2:RunInstances whose Resource is image ARNs (arn:aws:ec2:*::image/*), with a StringNotEquals condition on ec2:ImageID listing the approved AMIs, blocks any other image while leaving the call's instance, volume and network resources alone, and an ArnNotLike condition on aws:PrincipalArn exempts the incident-response role. A Config rule only reacts after launch, a permissions boundary binds only the roles it is attached to, and a tag policy validates tags, not images. Read more: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_syntax.html and https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html",
     "source": "generated",
-    "sourceRef": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html",
+    "sourceRef": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_syntax.html",
     "reviewStatus": "draft",
     "level": "standard"
   },
@@ -206,7 +206,7 @@
       {
         "key": "A",
         "text": "Restore an RMAN backup from Amazon S3 into the RDS for Oracle instance at the start of the outage window.",
-        "explanation": "RDS for Oracle does not support restoring RMAN backups, and a 50 TB restore would not fit in an hour anyway."
+        "explanation": "RDS for Oracle cannot restore a full RMAN database backup, and a 50 TB restore started at the outage would not finish in an hour anyway."
       },
       {
         "key": "B",
@@ -224,7 +224,7 @@
       }
     ],
     "correctKey": "C",
-    "explanation": "For a large, busy Oracle source, the initial copy runs while the source stays live: a Data Pump export taken as of one SCN seeds the target, and a DMS change data capture task started from that same SCN replays every change made since, until replication lag is close to zero. Cutover is then only stopping writes, letting the last changes apply and switching connections. Starting CDC when the import finishes loses the changes made during the load, a full load inside the window cannot move 50 TB in an hour, and RDS for Oracle cannot restore RMAN backups. Read more: https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
+    "explanation": "For a large, busy Oracle source, the initial copy runs while the source stays live: a Data Pump export taken as of one SCN seeds the target, and a DMS change data capture task started from that same SCN replays every change made since, until replication lag is close to zero. Cutover is then only stopping writes, letting the last changes apply and switching connections. Starting CDC when the import finishes loses the changes made during the load, a full load inside the window cannot move 50 TB in an hour, and RDS for Oracle cannot restore a full RMAN database backup. Read more: https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
     "reviewStatus": "draft",
@@ -285,12 +285,12 @@
       },
       {
         "key": "D",
-        "text": "An AWS Transfer Family SFTP server with a VPC endpoint, receiving the files from on-premises scripts over Direct Connect.",
-        "explanation": "Transfer Family is for partner file exchange over SFTP; it does not preserve POSIX metadata or verify a bulk copy."
+        "text": "Mountpoint for Amazon S3 on several on-premises hosts, with parallel rsync jobs copying the NFS files into the mounted bucket.",
+        "explanation": "Mountpoint does not support changing ownership or permissions, so rsync cannot carry the POSIX metadata, and nothing verifies the dataset afterwards."
       }
     ],
     "correctKey": "A",
-    "explanation": "DataSync is the managed service for moving file data into S3: agents read the NFS share in parallel, traffic can use Direct Connect to a VPC endpoint, POSIX metadata is stored with the objects, and the task verifies data after transfer. 300 TB at a sustained few Gbps fits in a month. S3 File Gateway is for ongoing cached access, and the CLI and SFTP options lose metadata and verification. Read more: https://docs.aws.amazon.com/datasync/latest/userguide/what-is-datasync.html",
+    "explanation": "DataSync is the managed service for moving file data into S3: agents read the NFS share in parallel, traffic can use Direct Connect to a VPC endpoint, POSIX metadata is stored with the objects, and the task verifies data after transfer. 300 TB at a sustained few Gbps fits in a month. S3 File Gateway is for ongoing cached access, and the CLI and Mountpoint options lose POSIX metadata and end-to-end verification. Read more: https://docs.aws.amazon.com/datasync/latest/userguide/what-is-datasync.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/datasync/latest/userguide/what-is-datasync.html",
     "reviewStatus": "draft",
@@ -1279,7 +1279,7 @@
     "categoryKey": "networking",
     "level": "extreme",
     "difficulty": 5,
-    "prompt": "A private hosted zone for corp.internal is associated with many VPCs, and on premises also hosts legacy records under corp.internal. After a Resolver forwarding rule for corp.internal was associated with the VPCs, the AWS-hosted records under corp.internal stopped resolving from them. What fixes this while keeping both sets of records resolvable?",
+    "prompt": "A private hosted zone for corp.internal is associated with many VPCs, and on premises also hosts legacy records under corp.internal. After a Resolver forwarding rule for corp.internal was associated with the VPCs, the AWS-hosted records under corp.internal stopped resolving from them. The AWS records may be renamed if needed. What fixes this while keeping both sets of records resolvable?",
     "options": [
       {
         "key": "A",
@@ -1330,8 +1330,8 @@
       },
       {
         "key": "C",
-        "text": "Run each service from the management account with organization-wide auto-enable, limited to security staff by IAM policies.",
-        "explanation": "This puts daily security operations in the management account, which is what the requirement rules out."
+        "text": "Use AWS Firewall Manager from the security account to deploy and administer the four services across the organization.",
+        "explanation": "Firewall Manager centrally manages WAF, Shield Advanced, security group and Network Firewall policies; it does not administer these four services."
       },
       {
         "key": "D",
@@ -1340,7 +1340,7 @@
       }
     ],
     "correctKey": "A",
-    "explanation": "Each of these services integrates with AWS Organizations and supports a delegated administrator, which moves administration out of the management account; where the service offers organization auto-enable, new accounts are covered without extra work. Running from the management account breaks the requirement, Security Hub does not administer the other services, and per-account deployments have no central admin. Read more: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services_list.html",
+    "explanation": "Each of these services integrates with AWS Organizations and supports a delegated administrator, which moves administration out of the management account; where the service offers organization auto-enable, new accounts are covered without extra work. Firewall Manager manages firewall-type policies rather than these services, Security Hub does not administer the other services, and per-account deployments have no central admin. Read more: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services_list.html",
     "source": "generated",
     "sourceRef": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services_list.html",
     "reviewStatus": "draft",
