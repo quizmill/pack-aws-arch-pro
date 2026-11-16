@@ -1,3 +1,5 @@
+> **This repo has moved.** The pack now lives in [quizmill/packs-aws](https://github.com/quizmill/packs-aws), directory [`aws-arch-pro`](https://github.com/quizmill/packs-aws/tree/main/aws-arch-pro), with its history. This repo is archived and frozen at its content of 2026-11-16.
+
 # AWS Certified Solutions Architect – Professional — quizmill pack
 
 Unofficial hard-mode Quizmill learning pack for AWS Certified Solutions Architect – Professional (SAP-C02).
